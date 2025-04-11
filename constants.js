@@ -49,7 +49,12 @@ export const ENVIRONMENT = {
     TEXTURES: {
       NINJA: 'https://play.rosebud.ai/assets/ChatGPT_Image_Apr_10__2025__04_35_45_AM-removebg-preview.png?ilkK',
       VILLAIN: 'https://play.rosebud.ai/assets/image (19).png?4ziz',
-      SMOKE_BOMB: 'https://play.rosebud.ai/assets/ChatGPT_Image_Apr_10__2025__10_51_55_PM-removebg-preview.png?rK7q'
+      SMOKE_BOMB: 'https://play.rosebud.ai/assets/ChatGPT_Image_Apr_10__2025__10_51_55_PM-removebg-preview.png?rK7q',
+      MINIONS: './assets/minions.png'
+    },
+    AUDIO: {
+      BACKGROUND_MUSIC: 'https://mathkraft-games.s3.us-east-1.amazonaws.com/Loren/battle-march-action-loop-6935.mp3',
+      ATTACK_SOUND: 'https://mathkraft-games.s3.us-east-1.amazonaws.com/Loren/dragon-quick-roar-mammel-94666.mp3'
     }
   };
   
@@ -162,4 +167,3 @@ export const ENVIRONMENT = {
     FLASH_DURATION: 150,
     PULSE_RATE: 0.003
   };
-  

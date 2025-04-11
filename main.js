@@ -8,6 +8,24 @@ function initGame() {
   scene.background = new THREE.Color(0x050510);
   scene.fog = new THREE.Fog(0x050510, 10, 30);
 
+  // ------------------------------
+  // Background Music Setup
+  // ------------------------------
+  // Create audio element for background music
+  // const backgroundMusic = new Audio();
+  // backgroundMusic.src = 'https://mathkraft-games.s3.us-east-1.amazonaws.com/Loren/battle-march-action-loop-6935.mp3';
+  // backgroundMusic.loop = true;
+  // backgroundMusic.volume = 0.5; // Set to 50% volume
+  
+  // // Play background music (will start when user interacts with the page)
+  // document.addEventListener('click', () => {
+  //   if (backgroundMusic.paused) {
+  //     backgroundMusic.play().catch(error => {
+  //       console.warn('Audio playback failed:', error);
+  //     });
+  //   }
+  // }, { once: true });
+
   const camera = new THREE.PerspectiveCamera(
     70,
     window.innerWidth / window.innerHeight,
@@ -92,11 +110,28 @@ function initGame() {
     fontFamily: "'Orbitron', sans-serif",
     zIndex: '10'
   });
-  introOverlay.innerHTML = `<h1 style="font-size: 48px; margin: 0;">LIGHTNING BOLT</h1>
-    <p style="font-size: 24px; margin: 10px 0;">Neon-lit City Ninja Showdown</p>
-    <p style="font-size: 20px; margin: 10px 0;">A neon-lit city at night with glowing skyscrapers and windy rooftops.</p>
-    <p style="font-size: 18px; margin: 10px 0;">Watch as our brave ninja stands tall... and a mysterious villain emerges.</p>
-    <p style="font-size: 20px; margin-top: 20px;">Press Enter to Start</p>`;
+  
+  // Create intro box container
+  const introBox = document.createElement('div');
+  Object.assign(introBox.style, {
+    background: 'rgba(0, 20, 40, 0.8)',
+    border: '2px solid #00ffff',
+    borderRadius: '10px',
+    padding: '30px',
+    maxWidth: '80%',
+    textAlign: 'center',
+    boxShadow: '0 0 20px rgba(0, 255, 255, 0.5)'
+  });
+  
+  introBox.innerHTML = `
+    <h1 style="font-size: 48px; margin: 0; text-shadow: 0 0 10px #00ffff;">LIGHTNING BOLT</h1>
+    <p style="font-size: 24px; margin: 10px 0; color: #ff3333;">VS <span style="font-style: italic;">SMOKE</span></p>
+    <img src="./assets/minions.png" style="max-width: 200px; margin: 15px 0;" alt="Minions" />
+    <p style="font-size: 22px; margin: 15px 0; color: #ff9933;">"Let's see if you can beat my team of 20 minions"</p>
+    <p style="font-size: 20px; margin-top: 20px;">Press Enter to Start</p>
+  `;
+  
+  introOverlay.appendChild(introBox);
   document.getElementById('renderDiv').appendChild(introOverlay);
 
   // ------------------------------
@@ -234,6 +269,7 @@ function initGame() {
   let minionsFought = 0;
   const totalMinions = 20;
   let minionsSpawned = false;
+  let currentLevel = 1; // Start at Level 1
   
   const villain = {
     group: new THREE.Group()
@@ -285,7 +321,7 @@ function initGame() {
     zIndex: '20',
     opacity: '0'
   });
-  speechBubble.innerHTML = "Try and beat me if you can!";
+  speechBubble.innerHTML = "Let's see if you can beat my team of 20 minions!";
   document.getElementById('renderDiv').appendChild(speechBubble);
 
   // ------------------------------
@@ -336,14 +372,18 @@ function initGame() {
   const minions = [];
   
   // Function to create a minion
-  function createMinion(x, y, z) {
+  function createMinion(x, y, z, level = 1) {
     const minion = {
       position: { x, y, z },
       health: 100,
       active: true,
       group: new THREE.Group(),
       lastHit: 0,
-      hitCooldown: 500 // milliseconds between hits
+      hitCooldown: 500, // milliseconds between hits
+      level: level, // Store the level
+      canShoot: level >= 2, // Level 2+ minions can shoot
+      projectileCooldown: 9000, // 9 seconds between shots for Level 2+ (increased from 3000)
+      lastProjectile: 0 // Track last shot time for Level 2+
     };
     
     // Create minion sprite with purple tint to distinguish from main villain
@@ -396,7 +436,7 @@ function initGame() {
     healthBarFill.position.set(0, 2.0, 0.01);
     minion.healthBar = healthBarFill;
     minion.group.add(healthBarFill);
-    
+    console.log(minion);
     return minion;
   }
   
@@ -607,6 +647,25 @@ function initGame() {
   });
   instructions.innerHTML = '';
   document.getElementById('renderDiv').appendChild(instructions);
+
+  // Add Level Indicator UI
+  const levelIndicator = document.createElement('div');
+  Object.assign(levelIndicator.style, {
+    position: 'absolute',
+    top: '20px',
+    right: '20px',
+    fontFamily: "'Orbitron', sans-serif",
+    fontSize: '24px',
+    color: '#00ffff', // Initial color for Level 1
+    textShadow: '0 0 10px rgba(0, 255, 255, 0.8)',
+    zIndex: '100',
+    padding: '5px 10px',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: '5px',
+    border: '1px solid #00ffff'
+  });
+  levelIndicator.textContent = 'LEVEL 1';
+  document.getElementById('renderDiv').appendChild(levelIndicator);
 
   // Add Google Font Link
   const fontLink = document.createElement('link');
@@ -1548,7 +1607,8 @@ function initGame() {
           // Position minions across the second rooftop with random offsets
           const xPos = 35 + (i - 1) * 5;
           const zPos = (Math.random() - 0.5) * 3;
-          const minion = createMinion(xPos, 1.5, zPos);
+          // Pass currentLevel (which is 1 here) to createMinion
+          const minion = createMinion(xPos, 1.5, zPos, currentLevel);
           minions.push(minion);
           
           // Add spawn effect
@@ -1592,6 +1652,7 @@ function initGame() {
     
     minions.forEach(minion => {
       if (minion.active) {
+        // console.log(minion);
         // Calculate distance to minion
         const distance = Math.abs(hero.position.x - minion.group.position.x);
         
@@ -1976,6 +2037,151 @@ function initGame() {
                   trail.createVillainParticle(particlePos, particleColor, velocity);
                 }
                 
+                // Progress to next level
+                if (currentLevel === 1) {
+                  // Advance to Level 2
+                  currentLevel = 2;
+                  levelIndicator.textContent = 'LEVEL 2';
+                  levelIndicator.style.color = '#ffaa00'; // Change color for Level 2
+                  
+                  // Show level 2 notification
+                  const levelNotification = document.createElement('div');
+                  levelNotification.id = 'levelNotification';
+                  Object.assign(levelNotification.style, {
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '36px',
+                    color: '#ffaa00',
+                    textShadow: '0 0 15px rgba(255, 170, 0, 0.8)',
+                    zIndex: '100',
+                    opacity: '0',
+                    transition: 'opacity 0.5s',
+                    textAlign: 'center',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    padding: '20px',
+                    borderRadius: '10px'
+                  });
+                  levelNotification.innerHTML = 'LEVEL 2<br><span style="font-size: 20px">Beware! These minions shoot projectiles!<br>Jump or Dodge to evade!</span>';
+                  document.getElementById('renderDiv').appendChild(levelNotification);
+                  
+                  setTimeout(() => { 
+                    levelNotification.style.opacity = '1';
+                    setTimeout(() => {
+                      levelNotification.style.opacity = '0';
+                      setTimeout(() => {
+                        // Safely remove notification if it exists
+                        if(document.getElementById('renderDiv').contains(levelNotification)) {
+                            document.getElementById('renderDiv').removeChild(levelNotification);
+                        }
+                        
+                        // Reset for level 2
+                        minionsSpawned = true; // Prevent re-triggering initial spawn
+                        // minionsFought = 0; // Resetting fought count is handled by clearing array
+                        
+                        // Clear any remaining level 1 minions
+                        minions.forEach(m => {
+                          if (m.group) {
+                            scene.remove(m.group);
+                          }
+                        });
+                        minions.length = 0; // Clear the array
+                        minionsFought = 0; // Reset counter AFTER clearing
+                        
+                        // Spawn new minions for Level 2 after a delay
+                        setTimeout(() => {
+                          for (let i = 0; i < 3; i++) {
+                            setTimeout(() => {
+                              const xPos = 35 + (i - 1) * 5; // Spread them out
+                              const zPos = (Math.random() - 0.5) * 3;
+                              const newMinion = createMinion(xPos, 1.5, zPos, 2); // Create Level 2 minions
+                              minions.push(newMinion);
+                              
+                              // Add spawn effect (reuse existing logic)
+                              const spawnEffect = new THREE.Mesh(
+                                new THREE.CircleGeometry(1, 16),
+                                new THREE.MeshBasicMaterial({ 
+                                  color: 0xffaa00, // Use Level 2 color for effect
+                                  transparent: true, 
+                                  opacity: 0.8,
+                                  side: THREE.DoubleSide
+                                })
+                              );
+                              spawnEffect.position.set(xPos, 1.5, zPos);
+                              spawnEffect.rotation.x = -Math.PI / 2;
+                              scene.add(spawnEffect);
+                              
+                              // Animate spawn effect
+                              const startTime = Date.now();
+                              (function expandSpawnEffect() {
+                                const elapsed = Date.now() - startTime;
+                                if (elapsed < 800) {
+                                  spawnEffect.scale.set(1 + elapsed / 200, 1 + elapsed / 200, 1);
+                                  spawnEffect.material.opacity = 0.8 * (1 - elapsed / 800);
+                                  requestAnimationFrame(expandSpawnEffect);
+                                } else {
+                                  scene.remove(spawnEffect);
+                                }
+                              })();
+                            }, i * 600); // Stagger spawns
+                          }
+                           // Update instructions for level 2
+                           instructions.innerHTML = hero.hasSmokeAttack ? 
+                           'LEVEL 2 MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade projectiles!' :
+                           'LEVEL 2 MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade projectiles!';
+                        }, 1000); // Delay before level 2 starts
+                      }, 500); // Delay after fade out
+                    }, 3000); // Notification duration
+                  }, 10); // Delay before fade in
+                } 
+                else if (currentLevel === 2) {
+                  // Advance to Level 3 (Placeholder)
+                  currentLevel = 3;
+                  levelIndicator.textContent = 'LEVEL 3';
+                  levelIndicator.style.color = '#ff3333'; // Red for Level 3
+                  
+                  // Show level 3 notification
+                  const levelNotification = document.createElement('div');
+                  levelNotification.id = 'levelNotification';
+                  Object.assign(levelNotification.style, {
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '36px',
+                    color: '#ff3333',
+                    textShadow: '0 0 15px rgba(255, 51, 51, 0.8)',
+                    zIndex: '100',
+                    opacity: '0',
+                    transition: 'opacity 0.5s',
+                    textAlign: 'center',
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    padding: '20px',
+                    borderRadius: '10px'
+                  });
+                  levelNotification.innerHTML = 'LEVEL 3<br><span style="font-size: 24px">Congratulations! You beat Level 2!<br>Level 3 coming soon...</span>';
+                  document.getElementById('renderDiv').appendChild(levelNotification);
+                  
+                  // Clear remaining level 2 minions
+                  minions.forEach(m => {
+                      if (m.group) {
+                          scene.remove(m.group);
+                      }
+                  });
+                  minions.length = 0;
+                  minionsFought = 0; // Reset counter
+                  
+                  // For Level 3, just show the message, no further game action yet
+                  setTimeout(() => { 
+                    levelNotification.style.opacity = '1';
+                     instructions.innerHTML = 'You cleared Level 2! Level 3 is under construction.';
+                  }, 10); // Show notification immediately
+                  // No automatic fade out for now
+                }
+                
                 // Fade in and out the healing notification
                 setTimeout(() => { 
                   healEffect.style.opacity = '1';
@@ -2106,28 +2312,293 @@ function initGame() {
           minionGlow.scale.x = Math.abs(minionGlow.scale.x);
         }
         
-        // Counter attack logic
+        // ------------- START MINION SHOOTING LOGIC -------------
+        // Level 2+ minions can shoot projectiles
+        if (minion.canShoot) { // Check if minion can shoot based on level
+          const now = Date.now();
+          const rangedAttackDistance = 15; // Range for shooting
+          const distanceToHero = Math.abs(hero.position.x - minion.group.position.x);
+
+          // If hero is in range and minion can shoot (cooldown check)
+          if (distanceToHero < rangedAttackDistance && now - minion.lastProjectile > minion.projectileCooldown) {
+            minion.lastProjectile = now;
+
+            // Determine direction for projectile
+            const attackDirection = minion.group.position.x < hero.position.x ? 1 : -1;
+
+            // Create dark energy projectile (plane geometry)
+            const projectileGeometry = new THREE.PlaneGeometry(0.2, 0.1); // Reduced height from 0.2 to 0.1
+            const projectileMaterial = new THREE.MeshBasicMaterial({
+              color: 0xff3333, // Red projectile for minions
+              transparent: true,
+              opacity: 0.9,
+              side: THREE.DoubleSide
+            });
+            const projectile = new THREE.Mesh(projectileGeometry, projectileMaterial);
+
+            // Position projectile at minion's position
+            projectile.position.set(
+              minion.group.position.x + (attackDirection * 0.7), // Start slightly in front
+              minion.group.position.y + hoverAmount, // Match hover height
+              0
+            );
+
+            // Rotate based on attack direction (slight angle)
+            projectile.rotation.z = attackDirection > 0 ? -Math.PI / 12 : Math.PI / 12;
+
+            scene.add(projectile);
+
+            // Create trail effect for projectile
+            const trail = new THREE.Mesh(
+              new THREE.PlaneGeometry(0.6, 0.2), // Smaller trail
+              new THREE.MeshBasicMaterial({
+                color: 0x880000, // Darker red trail
+                transparent: true,
+                opacity: 0.5
+              })
+            );
+            trail.position.copy(projectile.position);
+            trail.position.x -= attackDirection * 0.5; // Trail starts behind
+            trail.rotation.z = projectile.rotation.z;
+            scene.add(trail);
+
+            // Animate projectile
+            const projectileStartTime = Date.now();
+            // Adjust duration based on level for difficulty? (e.g., faster for higher levels)
+            // Remove fixed duration - projectile will travel until off-screen
+            // const projectileDuration = 1000; // Base duration (1 second)
+            const startX = projectile.position.x;
+            const startY = projectile.position.y; // Capture start Y
+            const targetX = hero.position.x; 
+            const targetY = hero.position.y; // Aim for hero's current Y
+            const totalXDistance = targetX - startX;
+            const totalYDistance = targetY - startY;
+            const projectileSpeed = 0.1; // Adjust speed as needed
+
+            (function animateMinionProjectile() {
+              // Calculate movement based on speed and direction
+              const moveX = attackDirection * projectileSpeed;
+              projectile.position.x += moveX;
+              // Keep projectile at the same Y level
+              projectile.position.y = startY/2;
+
+              // Update trail position
+              trail.position.x = projectile.position.x - (attackDirection * 0.3);
+              trail.position.y = projectile.position.y;
+              // Fade trail slightly over time (optional)
+              trail.material.opacity = Math.max(0, trail.material.opacity - 0.005);
+
+
+              // Check collision with hero during projectile flight
+              if (!hero.isInvulnerable && !hero.isDodging) { // Don't hit if dodging
+                const projectileToHeroDistance = Math.sqrt(
+                  Math.pow(hero.position.x - projectile.position.x, 2) +
+                  Math.pow(hero.position.y - projectile.position.y, 2)
+                );
+
+                // Use smaller collision radius for projectile
+                if (projectileToHeroDistance < 0.7) { 
+                  // Hero was hit by projectile
+                  hero.health -= 15; // Level 2 minions do more damage
+                  hero.lastHit = Date.now();
+                  hero.isInvulnerable = true; // Grant invulnerability frames
+
+                  // Update health bar
+                  updateHealthBar(hero.health);
+
+                  // Trigger screen shake on hit
+                  triggerScreenShake(0.1, 150);
+
+                  // Create impact effect (smaller red circle)
+                  const impactEffect = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.6, 16),
+                    new THREE.MeshBasicMaterial({
+                      color: 0xff3333,
+                      transparent: true,
+                      opacity: 0.8
+                    })
+                  );
+                  impactEffect.position.set(hero.position.x, hero.position.y, 0);
+                  impactEffect.rotation.x = -Math.PI / 2; // Lay flat
+                  scene.add(impactEffect);
+
+                  // Animate impact effect (quick flash)
+                  const impactStartTime = Date.now();
+                  const impactDuration = 150; 
+                  (function animateImpact() {
+                    const impactElapsed = Date.now() - impactStartTime;
+                    if (impactElapsed < impactDuration) {
+                      const impactProgress = impactElapsed / impactDuration;
+                      impactEffect.scale.set(1 + impactProgress * 2, 1 + impactProgress * 2, 1);
+                      impactEffect.material.opacity = 0.8 * (1 - impactProgress);
+                      requestAnimationFrame(animateImpact);
+                    } else {
+                      scene.remove(impactEffect);
+                    }
+                  })();
+
+                  // End projectile animation early
+                  scene.remove(projectile);
+                  scene.remove(trail);
+                  return; // Stop the animation loop for this projectile
+                }
+              }
+
+              // Check if projectile is off-screen
+              const screenEdgeMargin = 15; // How far off-screen before removing
+              const leftEdge = camera.position.x - window.innerWidth / window.innerHeight * camera.getFilmHeight() / 2 - screenEdgeMargin;
+              const rightEdge = camera.position.x + window.innerWidth / window.innerHeight * camera.getFilmHeight() / 2 + screenEdgeMargin;
+              
+              if (projectile.position.x < leftEdge || projectile.position.x > rightEdge || trail.material.opacity <= 0) {
+                // Remove projectile and trail if off-screen or faded
+                scene.remove(projectile);
+                scene.remove(trail);
+                return; // Stop the animation loop
+              }
+
+              // Continue animation
+              requestAnimationFrame(animateMinionProjectile);
+
+              // -------- Original duration-based logic removed --------
+              /*
+              const elapsed = Date.now() - projectileStartTime;
+              if (elapsed < projectileDuration) {
+                  const progress = elapsed / projectileDuration;
+                  
+                  // Move projectile in a straight line at fixed Y height
+                  // Slow down the projectile by reducing the progress rate
+                  const slowedProgress = progress * 0.5; // 40% slower movement
+                  projectile.position.x = startX + (slowedProgress * totalXDistance);
+                  // Keep Y position fixed at the starting height
+                  projectile.position.y = startY;
+                  
+                  // Update trail position with less frequent updates
+                  if (progress % 0.1 < 0.02) { // Only update trail position occasionally
+                    trail.position.x = projectile.position.x - (attackDirection * 0.3);
+                    trail.position.y = projectile.position.y;
+                    
+                    // Minimal trail fade
+                    trail.material.opacity = 0.4;
+                  }
+
+                  // Check collision with hero during projectile flight
+                  if (!hero.isInvulnerable && !hero.isDodging) { // Don't hit if dodging
+                    const projectileToHeroDistance = Math.sqrt(
+                      Math.pow(hero.position.x - projectile.position.x, 2) +
+                      Math.pow(hero.position.y - projectile.position.y, 2)
+                    );
+
+                    // Use smaller collision radius for projectile
+                    if (projectileToHeroDistance < 0.8) { 
+                      // Hero was hit by projectile
+                      hero.health -= 15; // Level 2 minions do more damage
+                      hero.lastHit = Date.now();
+                      hero.isInvulnerable = true; // Grant invulnerability frames
+
+                      // Update health bar
+                      updateHealthBar(hero.health);
+
+                      // Create impact effect (smaller red circle)
+                      const impactEffect = new THREE.Mesh(
+                        new THREE.CircleGeometry(0.6, 16),
+                        new THREE.MeshBasicMaterial({
+                          color: 0xff3333,
+                          transparent: true,
+                          opacity: 0.8
+                        })
+                      );
+                      impactEffect.position.set(hero.position.x, hero.position.y, 0);
+                      impactEffect.rotation.x = -Math.PI / 2; // Lay flat
+                      scene.add(impactEffect);
+
+                      // Animate impact effect (quick flash)
+                      const impactStartTime = Date.now();
+                      const impactDuration = 150; 
+                      (function animateImpact() {
+                        const impactElapsed = Date.now() - impactStartTime;
+                        if (impactElapsed < impactDuration) {
+                          const impactProgress = impactElapsed / impactDuration;
+                          impactEffect.scale.set(1 + impactProgress * 2, 1 + impactProgress * 2, 1);
+                          impactEffect.material.opacity = 0.8 * (1 - impactProgress);
+                          requestAnimationFrame(animateImpact);
+                        } else {
+                          scene.remove(impactEffect);
+                        }
+                      })();
+
+                      // End projectile animation early
+                      scene.remove(projectile);
+                      scene.remove(trail);
+                      return;
+                    }
+                  }
+
+                  // Continue animation regardless of whether it hits screen edge
+                  setTimeout(() => {
+                    requestAnimationFrame(animateMinionProjectile);
+                  }, 50); // Add delay between frames
+                } else {
+                  // Create impact effect if projectile missed
+                  const impactEffect = new THREE.Mesh(
+                    new THREE.CircleGeometry(0.5, 16),
+                    new THREE.MeshBasicMaterial({
+                      color: 0xff0000,
+                      transparent: true,
+                      opacity: 0.6
+                    })
+                  );
+                  impactEffect.position.set(projectile.position.x, projectile.position.y, 0);
+                  scene.add(impactEffect);
+
+                  // Simple fade out animation
+                  const impactStartTime = Date.now();
+                  const impactDuration = 100;
+
+                  (function animateImpact() {
+                    const impactElapsed = Date.now() - impactStartTime;
+                    if (impactElapsed < impactDuration) {
+                      const impactProgress = impactElapsed / impactDuration;
+                      impactEffect.scale.set(1 + impactProgress, 1 + impactProgress, 1);
+                      impactEffect.material.opacity = 0.6 * (1 - impactProgress);
+                      requestAnimationFrame(animateImpact);
+                    } else {
+                      scene.remove(impactEffect);
+                    }
+                  })();
+
+                  // Remove projectile and trail
+                  scene.remove(projectile);
+                  scene.remove(trail);
+                }
+                */
+                // -------- End of removed duration-based logic --------
+            })();
+          }
+        }
+        // ------------- END MOVED CODE -------------
+
+        // Counter attack logic (melee)
         const now = Date.now();
         const attackDistance = 2.5; // Slightly less than hero's attack range
         const distance = Math.abs(hero.position.x - minion.group.position.x);
-        
+
         // If hero is close and minion is not on cooldown
         if (distance < attackDistance && now - minion.lastHit > minion.hitCooldown) {
           minion.lastHit = now;
-          
+
           // Only damage hero if not invulnerable
           if (!hero.isInvulnerable) {
             // Damage hero
             hero.health -= 10;
             hero.lastHit = now;
             hero.isInvulnerable = true;
-            
+
             // Update health bar
             updateHealthBar(hero.health);
-            
+
             // Determine direction for projectile
             const attackDirection = minion.group.position.x < hero.position.x ? 1 : -1;
-            
+
             // Create dark energy projectile
             const projectileGeometry = new THREE.PlaneGeometry(1.0, 0.4);
             const projectileMaterial = new THREE.MeshBasicMaterial({
@@ -2137,19 +2608,19 @@ function initGame() {
               side: THREE.DoubleSide
             });
             const projectile = new THREE.Mesh(projectileGeometry, projectileMaterial);
-            
+
             // Position projectile at minion's position
             projectile.position.set(
-              minion.group.position.x + (attackDirection * 0.7), 
-              minion.group.position.y, 
+              minion.group.position.x + (attackDirection * 0.7),
+              minion.group.position.y,
               0
             );
-            
+
             // Rotate based on attack direction
             projectile.rotation.z = attackDirection > 0 ? -Math.PI / 6 : Math.PI / 6;
-            
+
             scene.add(projectile);
-            
+
             // Create trail effect for projectile
             const trail = new THREE.Mesh(
               new THREE.PlaneGeometry(0.6, 0.3),
@@ -2163,25 +2634,25 @@ function initGame() {
             trail.position.x -= attackDirection * 0.5;
             trail.rotation.z = projectile.rotation.z;
             scene.add(trail);
-            
+
             // Animate projectile
             const projectileStartTime = Date.now();
             const projectileDuration = 300; // Slower than hero projectile
             const startX = projectile.position.x;
             const targetX = hero.position.x;
             const totalDistance = targetX - startX;
-            
+
             (function animateProjectile() {
               const elapsed = Date.now() - projectileStartTime;
               if (elapsed < projectileDuration) {
                 const progress = elapsed / projectileDuration;
-                
+
                 // Move projectile toward target
                 projectile.position.x = startX + (progress * totalDistance);
-                
+
                 // Update trail position
                 trail.position.x = projectile.position.x - (attackDirection * 0.5);
-                
+
                 // Add some wobble effect
                 if (elapsed % 40 < 20) {
                   projectile.rotation.z = attackDirection > 0 ? -Math.PI / 6 - 0.1 : Math.PI / 6 + 0.1;
@@ -2190,10 +2661,10 @@ function initGame() {
                   projectile.rotation.z = attackDirection > 0 ? -Math.PI / 6 + 0.1 : Math.PI / 6 - 0.1;
                   projectile.position.y = minion.group.position.y + Math.sin(elapsed * 0.1) * 0.1;
                 }
-                
+
                 // Fade out trail
                 trail.material.opacity = 0.5 * (1 - progress);
-                
+
                 requestAnimationFrame(animateProjectile);
               } else {
                 // Create impact effect at hero position
@@ -2207,11 +2678,11 @@ function initGame() {
                 );
                 impactEffect.position.set(hero.position.x, hero.position.y, 0);
                 scene.add(impactEffect);
-                
+
                 // Animate impact effect
                 const impactStartTime = Date.now();
                 const impactDuration = 150;
-                
+
                 (function animateImpact() {
                   const impactElapsed = Date.now() - impactStartTime;
                   if (impactElapsed < impactDuration) {
@@ -2223,13 +2694,13 @@ function initGame() {
                     scene.remove(impactEffect);
                   }
                 })();
-                
+
                 // Remove projectile and trail
                 scene.remove(projectile);
                 scene.remove(trail);
               }
             })();
-            
+
             // Create hit notification
             const hitNotification = document.createElement('div');
             Object.assign(hitNotification.style, {
@@ -2248,7 +2719,7 @@ function initGame() {
             });
             hitNotification.innerHTML = '-10 HP';
             document.getElementById('renderDiv').appendChild(hitNotification);
-            
+
             setTimeout(() => {
               hitNotification.style.opacity = '1';
               setTimeout(() => {
@@ -2447,23 +2918,36 @@ function initGame() {
   // Function to show the math quiz dialog
   function showMathQuiz() {
     // Create an array of math questions and answers
-    const mathQuestions = [
-      {
-        question: "What is 8 × 7?",
-        options: ["54", "56", "64", "72"],
-        correctAnswer: "56"
-      },
-      {
-        question: "Solve: 15 + 26 - 13",
-        options: ["18", "28", "38", "48"],
-        correctAnswer: "28"
-      },
-      {
-        question: "What is 125 ÷ 5?",
-        options: ["20", "25", "35", "45"],
-        correctAnswer: "25"
+    // Generate random single-digit multiplication questions
+    const mathQuestions = [];
+    
+    for (let i = 0; i < 3; i++) {
+      // Generate two random single digits (1-9)
+      const num1 = Math.floor(Math.random() * 7) + 3;
+      const num2 = Math.floor(Math.random() * 7) + 3;
+      
+      // Calculate correct answer
+      const correctAnswer = (num1 * num2).toString();
+      
+      // Generate wrong options that are close to the correct answer
+      let options = [correctAnswer];
+      while (options.length < 4) {
+        // Create plausible wrong answers by adding/subtracting small numbers
+        const wrongAnswer = (num1 * num2 + Math.floor(Math.random() * 10) - 5).toString();
+        if (wrongAnswer > 0 && !options.includes(wrongAnswer)) {
+          options.push(wrongAnswer);
+        }
       }
-    ];
+      
+      // Shuffle options
+      options = options.sort(() => Math.random() - 0.5);
+      
+      mathQuestions.push({
+        question: `What is ${num1} × ${num2}?`,
+        options: options,
+        correctAnswer: correctAnswer
+      });
+    }
     
     let currentQuestionIndex = 0;
     let correctAnswers = 0;
@@ -3089,9 +3573,38 @@ function initGame() {
     };
   }
   
+  // Add screen shake function
+  function triggerScreenShake(intensity, duration) {
+    const shakeStartTime = Date.now();
+    // Store the camera's intended logical position (following the hero)
+    const intendedCameraX = hero.position.x; 
+    const intendedCameraY = 3;
+    const intendedCameraZ = 8;
+
+    function shake() {
+      const elapsed = Date.now() - shakeStartTime;
+      if (elapsed < duration) {
+        const shakeAmount = intensity * (1 - elapsed / duration); // Decrease intensity over time
+        // Apply shake relative to the intended position
+        camera.position.x = intendedCameraX + (Math.random() - 0.5) * shakeAmount * 2;
+        camera.position.y = intendedCameraY + (Math.random() - 0.5) * shakeAmount;
+        // Keep Z fixed unless you want depth shake too
+        camera.position.z = intendedCameraZ; 
+        
+        requestAnimationFrame(shake);
+      } else {
+        // Reset camera precisely to its intended logical position after shake
+        camera.position.x = intendedCameraX;
+        camera.position.y = intendedCameraY;
+        camera.position.z = intendedCameraZ;
+      }
+    }
+    shake();
+  }
+
   // Start animation with time parameter
   animate(0);
-  
+
   // ------------------------------
   // Handle Window Resize with Debounce
   // ------------------------------
