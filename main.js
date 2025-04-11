@@ -12,19 +12,19 @@ function initGame() {
   // Background Music Setup
   // ------------------------------
   // Create audio element for background music
-  // const backgroundMusic = new Audio();
-  // backgroundMusic.src = 'https://mathkraft-games.s3.us-east-1.amazonaws.com/Loren/battle-march-action-loop-6935.mp3';
-  // backgroundMusic.loop = true;
-  // backgroundMusic.volume = 0.5; // Set to 50% volume
+  const backgroundMusic = new Audio();
+  backgroundMusic.src = 'https://mathkraft-games.s3.us-east-1.amazonaws.com/Loren/battle-march-action-loop-6935.mp3';
+  backgroundMusic.loop = true;
+  backgroundMusic.volume = 0.5; // Set to 50% volume
   
-  // // Play background music (will start when user interacts with the page)
-  // document.addEventListener('click', () => {
-  //   if (backgroundMusic.paused) {
-  //     backgroundMusic.play().catch(error => {
-  //       console.warn('Audio playback failed:', error);
-  //     });
-  //   }
-  // }, { once: true });
+  // Play background music (will start when user interacts with the page)
+  document.addEventListener('click', () => {
+    if (backgroundMusic.paused) {
+      backgroundMusic.play().catch(error => {
+        console.warn('Audio playback failed:', error);
+      });
+    }
+  }, { once: true });
 
   const camera = new THREE.PerspectiveCamera(
     70,
@@ -436,7 +436,6 @@ function initGame() {
     healthBarFill.position.set(0, 2.0, 0.01);
     minion.healthBar = healthBarFill;
     minion.group.add(healthBarFill);
-    console.log(minion);
     return minion;
   }
   
@@ -2162,7 +2161,7 @@ function initGame() {
                     padding: '20px',
                     borderRadius: '10px'
                   });
-                  levelNotification.innerHTML = 'LEVEL 3<br><span style="font-size: 24px">Congratulations! You beat Level 2!<br>Level 3 coming soon...</span>';
+                  levelNotification.innerHTML = 'LEVEL 3<br><span style="font-size: 24px">Congratulations! You beat Level 2!<br>Level 3 to be designed by Connor!!</span>';
                   document.getElementById('renderDiv').appendChild(levelNotification);
                   
                   // Clear remaining level 2 minions
@@ -2379,13 +2378,13 @@ function initGame() {
               // Calculate movement based on speed and direction
               const moveX = attackDirection * projectileSpeed;
               projectile.position.x += moveX;
-              // Keep projectile at the same Y level
-              projectile.position.y = startY/2;
+              // Keep projectile at the same Y level it started at
+              projectile.position.y = startY;
 
               // Update trail position
               trail.position.x = projectile.position.x - (attackDirection * 0.3);
               trail.position.y = projectile.position.y;
-              // Fade trail slightly over time (optional)
+              // Fade trail slightly over time
               trail.material.opacity = Math.max(0, trail.material.opacity - 0.005);
 
 
@@ -2397,7 +2396,7 @@ function initGame() {
                 );
 
                 // Use smaller collision radius for projectile
-                if (projectileToHeroDistance < 0.7) { 
+                if (projectileToHeroDistance < 0.8) { 
                   // Hero was hit by projectile
                   hero.health -= 15; // Level 2 minions do more damage
                   hero.lastHit = Date.now();
@@ -2437,141 +2436,36 @@ function initGame() {
                     }
                   })();
 
-                  // End projectile animation early
+                  // End projectile animation early by removing meshes
                   scene.remove(projectile);
-                  scene.remove(trail);
+                  if (scene.children.includes(trail)) { // Remove trail only if it exists
+                     scene.remove(trail);
+                  }
                   return; // Stop the animation loop for this projectile
                 }
               }
 
               // Check if projectile is off-screen
-              const screenEdgeMargin = 15; // How far off-screen before removing
-              const leftEdge = camera.position.x - window.innerWidth / window.innerHeight * camera.getFilmHeight() / 2 - screenEdgeMargin;
-              const rightEdge = camera.position.x + window.innerWidth / window.innerHeight * camera.getFilmHeight() / 2 + screenEdgeMargin;
-              
-              if (projectile.position.x < leftEdge || projectile.position.x > rightEdge || trail.material.opacity <= 0) {
-                // Remove projectile and trail if off-screen or faded
+              const screenEdgeMargin = 0; // Reduced margin for later removal
+              // Calculate screen edges based on camera view frustum
+              const halfWidth = (window.innerWidth / window.innerHeight) * (camera.position.z - projectile.position.z) * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+              const leftEdge = camera.position.x - halfWidth - screenEdgeMargin;
+              const rightEdge = camera.position.x + halfWidth + screenEdgeMargin;
+
+              if (projectile.position.x < leftEdge || projectile.position.x > rightEdge) {
+                // Remove projectile and trail if off-screen
                 scene.remove(projectile);
-                scene.remove(trail);
+                if (scene.children.includes(trail)) { // Remove trail only if it exists
+                    scene.remove(trail);
+                }
                 return; // Stop the animation loop
+              } else if (trail.material.opacity <= 0 && scene.children.includes(trail)) {
+                 // If trail faded completely, remove it, but let the projectile continue
+                 scene.remove(trail);
               }
 
               // Continue animation
               requestAnimationFrame(animateMinionProjectile);
-
-              // -------- Original duration-based logic removed --------
-              /*
-              const elapsed = Date.now() - projectileStartTime;
-              if (elapsed < projectileDuration) {
-                  const progress = elapsed / projectileDuration;
-                  
-                  // Move projectile in a straight line at fixed Y height
-                  // Slow down the projectile by reducing the progress rate
-                  const slowedProgress = progress * 0.5; // 40% slower movement
-                  projectile.position.x = startX + (slowedProgress * totalXDistance);
-                  // Keep Y position fixed at the starting height
-                  projectile.position.y = startY;
-                  
-                  // Update trail position with less frequent updates
-                  if (progress % 0.1 < 0.02) { // Only update trail position occasionally
-                    trail.position.x = projectile.position.x - (attackDirection * 0.3);
-                    trail.position.y = projectile.position.y;
-                    
-                    // Minimal trail fade
-                    trail.material.opacity = 0.4;
-                  }
-
-                  // Check collision with hero during projectile flight
-                  if (!hero.isInvulnerable && !hero.isDodging) { // Don't hit if dodging
-                    const projectileToHeroDistance = Math.sqrt(
-                      Math.pow(hero.position.x - projectile.position.x, 2) +
-                      Math.pow(hero.position.y - projectile.position.y, 2)
-                    );
-
-                    // Use smaller collision radius for projectile
-                    if (projectileToHeroDistance < 0.8) { 
-                      // Hero was hit by projectile
-                      hero.health -= 15; // Level 2 minions do more damage
-                      hero.lastHit = Date.now();
-                      hero.isInvulnerable = true; // Grant invulnerability frames
-
-                      // Update health bar
-                      updateHealthBar(hero.health);
-
-                      // Create impact effect (smaller red circle)
-                      const impactEffect = new THREE.Mesh(
-                        new THREE.CircleGeometry(0.6, 16),
-                        new THREE.MeshBasicMaterial({
-                          color: 0xff3333,
-                          transparent: true,
-                          opacity: 0.8
-                        })
-                      );
-                      impactEffect.position.set(hero.position.x, hero.position.y, 0);
-                      impactEffect.rotation.x = -Math.PI / 2; // Lay flat
-                      scene.add(impactEffect);
-
-                      // Animate impact effect (quick flash)
-                      const impactStartTime = Date.now();
-                      const impactDuration = 150; 
-                      (function animateImpact() {
-                        const impactElapsed = Date.now() - impactStartTime;
-                        if (impactElapsed < impactDuration) {
-                          const impactProgress = impactElapsed / impactDuration;
-                          impactEffect.scale.set(1 + impactProgress * 2, 1 + impactProgress * 2, 1);
-                          impactEffect.material.opacity = 0.8 * (1 - impactProgress);
-                          requestAnimationFrame(animateImpact);
-                        } else {
-                          scene.remove(impactEffect);
-                        }
-                      })();
-
-                      // End projectile animation early
-                      scene.remove(projectile);
-                      scene.remove(trail);
-                      return;
-                    }
-                  }
-
-                  // Continue animation regardless of whether it hits screen edge
-                  setTimeout(() => {
-                    requestAnimationFrame(animateMinionProjectile);
-                  }, 50); // Add delay between frames
-                } else {
-                  // Create impact effect if projectile missed
-                  const impactEffect = new THREE.Mesh(
-                    new THREE.CircleGeometry(0.5, 16),
-                    new THREE.MeshBasicMaterial({
-                      color: 0xff0000,
-                      transparent: true,
-                      opacity: 0.6
-                    })
-                  );
-                  impactEffect.position.set(projectile.position.x, projectile.position.y, 0);
-                  scene.add(impactEffect);
-
-                  // Simple fade out animation
-                  const impactStartTime = Date.now();
-                  const impactDuration = 100;
-
-                  (function animateImpact() {
-                    const impactElapsed = Date.now() - impactStartTime;
-                    if (impactElapsed < impactDuration) {
-                      const impactProgress = impactElapsed / impactDuration;
-                      impactEffect.scale.set(1 + impactProgress, 1 + impactProgress, 1);
-                      impactEffect.material.opacity = 0.6 * (1 - impactProgress);
-                      requestAnimationFrame(animateImpact);
-                    } else {
-                      scene.remove(impactEffect);
-                    }
-                  })();
-
-                  // Remove projectile and trail
-                  scene.remove(projectile);
-                  scene.remove(trail);
-                }
-                */
-                // -------- End of removed duration-based logic --------
             })();
           }
         }
