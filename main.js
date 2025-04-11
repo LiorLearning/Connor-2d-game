@@ -73,7 +73,7 @@ function initGame() {
   // Game Phase, Movement Lock, and Intro Overlay
   // ------------------------------
   let gamePhase = "intro";
-  let movementLocked = false; // When true, the hero’s movement is disabled.
+  let movementLocked = false; // When true, the hero's movement is disabled.
 
   const introOverlay = document.createElement('div');
   introOverlay.id = "introOverlay";
@@ -92,13 +92,12 @@ function initGame() {
     fontFamily: "'Orbitron', sans-serif",
     zIndex: '10'
   });
-  // introOverlay.innerHTML = 
-  //   "<h1 style=\"font-size: 48px; margin: 0;\">LIGHTNING BOLT</h1>" +
-  //   "<p style=\"font-size: 24px; margin: 10px 0;\">Neon-lit City Ninja Showdown</p>" +
-  //   "<p style=\"font-size: 20px; margin: 10px 0;\">A neon-lit city at night with glowing skyscrapers and windy rooftops.</p>" +
-  //   "<p style=\"font-size: 18px; margin: 10px 0;\">Watch as our brave ninja stands tall... and a mysterious villain emerges.</p>" +
-  //   "<p style=\"font-size: 20px; margin-top: 20px;\">Press Enter to Start</p>";
-  // document.getElementById('renderDiv').appendChild(introOverlay);
+  introOverlay.innerHTML = `<h1 style="font-size: 48px; margin: 0;">LIGHTNING BOLT</h1>
+    <p style="font-size: 24px; margin: 10px 0;">Neon-lit City Ninja Showdown</p>
+    <p style="font-size: 20px; margin: 10px 0;">A neon-lit city at night with glowing skyscrapers and windy rooftops.</p>
+    <p style="font-size: 18px; margin: 10px 0;">Watch as our brave ninja stands tall... and a mysterious villain emerges.</p>
+    <p style="font-size: 20px; margin-top: 20px;">Press Enter to Start</p>`;
+  document.getElementById('renderDiv').appendChild(introOverlay);
 
   // ------------------------------
   // Create Hero: Lightning Bolt (Sprite + Glow)
@@ -136,7 +135,7 @@ function initGame() {
     color: 0xffffff
   });
   const heroSprite = new THREE.Sprite(heroMaterial);
-  // Since the hero’s front (the right boundary) is the default,
+  // Since the hero's front (the right boundary) is the default,
   // we leave heroSprite.scale.x positive.
   heroSprite.scale.set(3.0, 3.0, 1);
   hero.group.add(heroSprite);
@@ -248,8 +247,8 @@ function initGame() {
   });
   const villainSprite = new THREE.Sprite(villainMaterial);
   villainSprite.scale.set(3.0, 3.0, 1);
-  // Tag the villain’s left boundary as "back" and right as "front".
-  // Since the front is on the right by design, to show the villain’s front on the left side,
+  // Tag the villain's left boundary as "back" and right as "front".
+  // Since the front is on the right by design, to show the villain's front on the left side,
   // we flip it horizontally by setting a negative scale.x.
   villainSprite.scale.x = -Math.abs(villainSprite.scale.x);
   villain.group.add(villainSprite);
@@ -762,7 +761,7 @@ function initGame() {
       // Start gameplay and lock hero movement while villain is visible.
       gamePhase = "gameplay";
       movementLocked = true;
-      // document.getElementById('renderDiv').removeChild(introOverlay);
+      document.getElementById('renderDiv').removeChild(introOverlay);
       instructions.innerHTML = 'Use ARROW KEYS or WASD to move and jump';
 
       // Show villain speech bubble for 3 seconds.
@@ -1588,7 +1587,7 @@ function initGame() {
     }
     
     // Check for enemies in attack range and show indicator
-    const attackRange = 3.0; // Same range used in attack logic
+    const attackRange = 5.0; // Increased from 3.0 - How close hero needs to be to hit minion
     let enemyInRange = false;
     
     minions.forEach(minion => {
@@ -1664,7 +1663,7 @@ function initGame() {
       const now = Date.now();
       
       // Check if hero is in attack range of any minion
-      const attackRange = 3.0; // How close hero needs to be to hit minion
+      const attackRange = 5.0; // Increased from 3.0 - How close hero needs to be to hit minion
       let hasAttacked = false;
       
       // Only process attack if not on cooldown and hero has smoke bombs
