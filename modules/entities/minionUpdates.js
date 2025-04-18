@@ -46,13 +46,18 @@ export function updateMinionHealthBar(minion) {
   
   // Center the health bar fill as it shrinks
   minion.healthBar.position.x = -((1 - healthPercentage) * healthBarOriginalWidth) / 2;
+  
+  // If health is at 0, mark the minion as defeated
+  if (minion.health <= 0 && minion.active) {
+    minion.defeated = true;
+  }
 }
 
 export function spawnMinions(scene, currentRooftop, minions, currentLevel, hero, instructions) {
   // Create minion spawn animation and notification
   createNotification(
-    'BOLT\'S MINIONS APPEAR!<br><span style="font-size: 20px">Defeat 3 of 20 minions</span>',
-    { color: '#ff33ff', fontSize: '28px', duration: 2000 }
+    'BOLT\'S GUN MINIONS APPEAR!<br><span style="font-size: 20px">Defeat 3 Gun Minions</span>',
+    { color: '#ffaa00', fontSize: '28px', duration: 2000 }
   );
   
   // Spawn 3 minions with a slight delay between each
@@ -62,8 +67,8 @@ export function spawnMinions(scene, currentRooftop, minions, currentLevel, hero,
       const xPos = 35 + (i - 1) * 5;
       const zPos = (Math.random() - 0.5) * 3;
       
-      // Create minion and add to array
-      const minion = createMinion(scene, xPos, 1.5, zPos, currentLevel);
+      // Create gun-man minion and add to array (regardless of level)
+      const minion = createMinion(scene, xPos, 1.5, zPos, currentLevel, 'gun-man');
       minions.push(minion);
       
       // Create spawn effect
@@ -73,8 +78,8 @@ export function spawnMinions(scene, currentRooftop, minions, currentLevel, hero,
   
   // Update instructions
   instructions.innerHTML = hero.hasBoltAttack ? 
-    'BOLT\'S MINIONS BLOCK YOUR PATH! Press E or F to attack!' :
-    'BOLT\'S MINIONS BLOCK YOUR PATH! Find bolts to attack!';
+    'BOLT\'S GUN MINIONS BLOCK YOUR PATH! Press E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
+    'BOLT\'S GUN MINIONS BLOCK YOUR PATH! Find bolts to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
 }
 
 export function defeatedMinion(minion, scene, minionsFought, totalMinions, 
@@ -88,24 +93,11 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
   // Hide minion
   minion.group.visible = false;
   
-  // Show defeat notification with customized message based on level and type
-  let defeatMessage = '';
+  // Show defeat notification for gun minions
+  const defeatMessage = `GUN MINION DEFEATED!<br><span style="font-size: 18px">${minionsFought + 1} of 3</span>`;
   
-  if (currentLevel === 3) {
-    if (minion.type === 'gun-man') {
-      defeatMessage = `GUN MINION DEFEATED!<br><span style="font-size: 18px">${minionsFought + 1} of 3</span>`;
-    } else if (minion.type === 'rifle-man') {
-      defeatMessage = `RIFLE MINION DEFEATED!<br><span style="font-size: 18px">${minionsFought + 1} of 2</span>`;
-    } else {
-      defeatMessage = `MINION DEFEATED!<br><span style="font-size: 18px">${minionsFought + 1} of ${totalMinions}</span>`;
-    }
-  } else {
-    defeatMessage = `MINION DEFEATED!<br><span style="font-size: 18px">${minionsFought + 1} of ${totalMinions}</span>`;
-  }
-  
-  // Choose color based on minion type
-  let defeatColor = minion.type === 'gun-man' ? '#ffaa00' : 
-                    minion.type === 'rifle-man' ? '#ff3333' : '#8833ff';
+  // Choose color for gun-man
+  let defeatColor = '#ffaa00';
   
   createNotification(
     defeatMessage,
@@ -156,7 +148,7 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
         
         // Show notification about stairs
         createNotification(
-          'STAIRS APPEARED!<br><span style="font-size: 18px">Climb up to face the rifle minions!</span>',
+          'STAIRS APPEARED!<br><span style="font-size: 18px">Climb up to face more gun minions!</span>',
           { color: '#00ffff', duration: 3000 }
         );
         
@@ -168,8 +160,8 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
       }
     } 
     else if (hero.gameState && hero.gameState.currentStage === 2) {
-      // Stage 2: Rifle minions - need to defeat 2
-      if (minionsFought + 1 === 2) {
+      // Stage 2: Gun minions - need to defeat 3
+      if (minionsFought + 1 === 3) {
         // Restore full health
         hero.health = 100;
         updateHealthBar(hero.health);
@@ -309,14 +301,15 @@ function createStairs(scene, x, y, z) {
 function processMinionRangedAttack(minion, hero, scene, triggerScreenShake, updateHealthBar) {
   if (minion.canShoot) { // Check if minion can shoot based on level
     const now = Date.now();
-    const rangedAttackDistance = 15; // Range for shooting
+    const rangedAttackDistance = 5; // Range for shooting - reduced from 15 to 5 for closer range
     const distanceToHero = Math.abs(hero.position.x - minion.group.position.x);
     
     // Calculate hover amount here for use in projectile positioning
     const hoverAmount = Math.sin(Date.now() * 0.003 + minion.position.x) * 0.1;
 
-    // If hero is in range and minion can shoot (cooldown check)
-    if (distanceToHero < rangedAttackDistance && now - minion.lastProjectile > minion.projectileCooldown) {
+    // If hero is in range and minion can shoot (cooldown check) and game is not paused/solving math
+    if (distanceToHero < rangedAttackDistance && now - minion.lastProjectile > minion.projectileCooldown 
+        && !(window.gameState && window.gameState.movementLocked)) {
       minion.lastProjectile = now;
 
       // Determine direction for projectile
@@ -877,18 +870,56 @@ function createMinionMeleeProjectile(scene, minion, hero, attackDirection) {
 
 // Add a new function to check if the player has reached the top of the stairs
 export function checkLevelThreeStageTransition(hero, scene, minions, currentLevel, levelIndicator, createMinion, instructions) {
-  // Check for Level 3 stage transition when climbing stairs
+  // Only run this logic if we're in Level 3 and the hero has defeated stage 1
   if (currentLevel === 3 && hero.hasDefeatedStage1 && 
       hero.position.x >= 50 && hero.position.x <= 60 && 
       hero.position.y >= 3.5) {
     
     // Check if this is the first time reaching the platform
     if (hero.gameState && hero.gameState.currentStage === 1) {
-      // Advance to stage 2 of Level 3
-      advanceToNextLevel(currentLevel, levelIndicator, hero, minions, scene, createMinion, instructions);
+      // Mark stage transition
+      hero.gameState.currentStage = 2;
       
-      // Prevent this from triggering again
-      hero.hasDefeatedStage1 = false;
+      // Show stage 2 notification
+      createNotification(
+        'LEVEL 3 - STAGE 2<br><span style="font-size: 20px">More gun minions ahead!</span>',
+        {
+          color: '#ff5555',
+          fontSize: '36px',
+          duration: 3000,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)'
+        }
+      );
+      
+      // Clear any remaining stage 1 minions
+      minions.forEach(m => {
+        if (m.group) {
+          scene.remove(m.group);
+        }
+      });
+      minions.length = 0;
+      
+      // Spawn gun minions for Level 3 Stage 2
+      setTimeout(() => {
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const xPos = 55 + (i - 1) * 5; // Position them ahead
+            const zPos = (Math.random() - 0.5) * 3;
+            
+            // Create gun-man minions for stage 2
+            const newMinion = createMinion(scene, xPos, 4.5, zPos, 3, 'gun-man');
+            minions.push(newMinion);
+            
+            // Add spawn effect
+            createMinionSpawnEffect(scene, xPos, 4.5, zPos, 3);
+          }, i * 600); // Stagger spawns
+        }
+        
+        // Update instructions
+        instructions.innerHTML = hero.hasSmokeAttack ? 
+          'LEVEL 3 STAGE 2! Gun minions ahead! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade!' :
+          'LEVEL 3 STAGE 2! Gun minions ahead! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade!';
+      }, 1000);
     }
   }
 } 

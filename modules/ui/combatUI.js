@@ -113,8 +113,8 @@ export function processHeroAttack(hero, minions, scene, minionsFought, totalMini
       // Create bolt projectile
       createBoltProjectile(scene, hero, nearestMinion, attackDirection);
       
-      // Apply damage to minion
-      nearestMinion.health -= 50;
+      // Apply damage to minion - ensure health doesn't go below 0
+      nearestMinion.health = Math.max(0, nearestMinion.health - 50);
       
       // Update minion health bar
       updateMinionHealthBar(nearestMinion);

@@ -6,7 +6,12 @@ export let scene, camera, renderer;
 export function initScene() {
   // Create scene
   scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x050510);
+  
+  // Load background texture
+  const textureLoader = new THREE.TextureLoader();
+  const backgroundTexture = textureLoader.load('assets/background.png');
+  scene.background = backgroundTexture;
+  
   scene.fog = new THREE.Fog(0x050510, 10, 30);
 
   // Create camera

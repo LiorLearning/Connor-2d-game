@@ -12,7 +12,7 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
     
     // Show level 2 notification
     createNotification(
-      'LEVEL 2<br><span style="font-size: 20px">Beware! These minions shoot projectiles!<br>Jump or Dodge to evade!</span>',
+      'LEVEL 2<br><span style="font-size: 20px">Beware! Gun minions ahead!<br>Jump or Dodge to evade bullets!</span>',
       {
         color: '#ffaa00',
         fontSize: '36px',
@@ -36,7 +36,8 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
         setTimeout(() => {
           const xPos = 35 + (i - 1) * 5; // Spread them out
           const zPos = (Math.random() - 0.5) * 3;
-          const newMinion = createMinion(scene, xPos, 1.5, zPos, 2); // Create Level 2 minions
+          // Create gun-men minions for all levels
+          const newMinion = createMinion(scene, xPos, 1.5, zPos, 2, 'gun-man');
           minions.push(newMinion);
           
           // Add spawn effect
@@ -46,10 +47,10 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
       
       // Update instructions for level 2
       instructions.innerHTML = hero.hasSmokeAttack ? 
-        'LEVEL 2 MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade projectiles!' :
-        'LEVEL 2 MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade projectiles!';
+        'LEVEL 2 GUN MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
+        'LEVEL 2 GUN MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
     }, 1000); // Delay before level 2 starts
-  } 
+  }
   else if (currentLevel === 2) {
     // Advance to Level 3
     currentLevel = 3;
@@ -96,8 +97,8 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
       
       // Update instructions for level 3
       instructions.innerHTML = hero.hasSmokeAttack ? 
-        'LEVEL 3 MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
-        'LEVEL 3 MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
+        'LEVEL 3 GUN MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
+        'LEVEL 3 GUN MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
     }, 1000); // Delay before level 3 starts
   }
   else if (currentLevel === 3 && hero.gameState && hero.gameState.currentStage === 1) {
@@ -106,7 +107,7 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
     
     // Show level 3 stage 2 notification
     createNotification(
-      'LEVEL 3 - STAGE 2<br><span style="font-size: 20px">Beware! Rifle minions ahead!</span>',
+      'LEVEL 3 - STAGE 2<br><span style="font-size: 20px">More gun minions ahead!</span>',
       {
         color: '#ff5555',
         fontSize: '36px',
@@ -124,17 +125,14 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
     minions.length = 0;
     minionsFought = 0; // Reset counter
     
-    // Spawn new rifle minions for Level 3 Stage 2 after a delay
+    // Spawn gun minions for Level 3 Stage 2 after a delay
     setTimeout(() => {
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < 3; i++) {
         setTimeout(() => {
-          const xPos = 50 + (i - 0.5) * 5; // Position them further ahead
+          const xPos = 50 + (i - 1) * 5; // Position them further ahead
           const zPos = (Math.random() - 0.5) * 3;
-          // Create Level 3 stage 2 minions with rifle-man texture
-          const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'rifle-man'); 
-          // These minions are more powerful
-          newMinion.projectileCooldown = 7000; // Shoot more often
-          newMinion.damage = 20; // Do more damage
+          // Create gun-men for Level 3 stage 2
+          const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man'); 
           minions.push(newMinion);
           
           // Add spawn effect
@@ -144,35 +142,12 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
       
       // Update instructions for level 3 stage 2
       instructions.innerHTML = hero.hasSmokeAttack ? 
-        'LEVEL 3 STAGE 2! Rifle minions deal more damage! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade!' :
-        'LEVEL 3 STAGE 2! Rifle minions deal more damage! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade!';
+        'LEVEL 3 STAGE 2! Gun minions ahead! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade!' :
+        'LEVEL 3 STAGE 2! Gun minions ahead! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade!';
     }, 1000);
   }
-  else if (currentLevel === 3 && hero.gameState && hero.gameState.currentStage === 2) {
-    // Beaten the game!
-    createNotification(
-      'CONGRATULATIONS!<br><span style="font-size: 24px">You\'ve defeated all enemies!</span>',
-      {
-        color: '#00ffaa',
-        fontSize: '42px',
-        duration: 5000,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)'
-      }
-    );
-    
-    // Clear any remaining minions
-    minions.forEach(m => {
-      if (m.group) {
-        scene.remove(m.group);
-      }
-    });
-    minions.length = 0;
-    
-    // Update instructions
-    instructions.innerHTML = 'You\'ve completed the game! Refresh to play again.';
-  }
   
-  return currentLevel; // Return the updated level
+  return currentLevel;
 }
 
 export function handleJumpPrompt(hero, currentRooftop, minions, boltCollectible) {

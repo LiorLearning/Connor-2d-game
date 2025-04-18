@@ -7,10 +7,10 @@ export function createRooftops(scene) {
   // Create initial rooftop
   const groundGeometry = new THREE.BoxGeometry(30, 1, 10);
   const groundMaterial = new THREE.MeshPhongMaterial({
-    color: 0x005566,
-    emissive: 0x003344,
-    emissiveIntensity: 0.5,
-    shininess: 50
+    color: 0x7ab8cc,
+    emissive: 0x3a5e6d,
+    emissiveIntensity: 0.3,
+    shininess: 70
   });
   const initialRooftop = new THREE.Mesh(groundGeometry, groundMaterial);
   initialRooftop.position.set(0, -0.5, 0);
@@ -26,10 +26,10 @@ export function createRooftops(scene) {
   const nextRooftop = new THREE.Mesh(
     new THREE.BoxGeometry(25, 1, 10),
     new THREE.MeshPhongMaterial({
-      color: 0x006677,
-      emissive: 0x004455,
-      emissiveIntensity: 0.6,
-      shininess: 60
+      color: 0x89c4d6,
+      emissive: 0x3f6675,
+      emissiveIntensity: 0.4,
+      shininess: 80
     })
   );
   // Position the next rooftop with a gap of 5 units
@@ -52,10 +52,10 @@ export function createRooftops(scene) {
 function addEdgesToRooftops(scene, rooftops) {
   const edgeHeight = 0.3, edgeWidth = 0.3;
   const edgeMaterial = new THREE.MeshPhongMaterial({
-    color: 0x00ddff,
-    emissive: 0x00aaff,
-    emissiveIntensity: 0.6,
-    shininess: 30
+    color: 0x9fe8ff,
+    emissive: 0x4db8d3,
+    emissiveIntensity: 0.5,
+    shininess: 90
   });
   
   // Function to add edges to a rooftop

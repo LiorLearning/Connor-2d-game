@@ -54,6 +54,9 @@ function initGame() {
     currentLevel: 3
   };
   
+  // Make gameState globally available for minions to access
+  window.gameState = gameState;
+  
   // Create collectibles
   const boltCollectible = createBoltCollectible(scene, hero, gameState, showMathQuiz);
   
@@ -119,8 +122,8 @@ function initGame() {
         
         // Update instructions for level 3
         instructions.innerHTML = hero.hasSmokeAttack ? 
-          'LEVEL 3 MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
-          'LEVEL 3 MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
+          'LEVEL 3 GUN MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
+          'LEVEL 3 GUN MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
       }, 1000);
       
       // Remove the event listener after initialization
@@ -143,5 +146,5 @@ function initGame() {
   });
 }
 
-// Start the game immediately
-initGame();
+// Start the game when the window loads
+window.addEventListener('load', initGame);

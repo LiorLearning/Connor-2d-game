@@ -190,22 +190,30 @@ export function animationLoop(
     let currentRooftop = null;
     
     // Define the hero's sprite width for collision purposes
-    const heroHalfWidth = 1.0; // Half the width of the hero for collision detection
+    const heroHalfWidth = 1.0;
     
     for (const rooftop of rooftops) {
       // Check if any part of the hero is on the rooftop (more lenient collision)
       if (hero.position.x + heroHalfWidth >= rooftop.userData.xMin && 
           hero.position.x - heroHalfWidth <= rooftop.userData.xMax && 
           Math.abs(hero.position.z) <= rooftop.geometry.parameters.depth/2) {
-        onAnyRooftop = true;
-        currentRooftop = rooftop;
+            
+        // Check if hero is at the right height to be on this rooftop
+        const rooftopHeight = rooftop.position.y + (rooftop.geometry.parameters.height / 2);
+        const heroBottom = hero.position.y - 1; // Approximate hero's feet position
         
-        // Mark hero as having reached second rooftop when they land on it
-        if (rooftop.userData.id === 1 && !hero.hasReachedSecondRooftop) {
-          hero.hasReachedSecondRooftop = true;
+        // If hero is at or slightly above the rooftop, and not jumping upward
+        if (heroBottom <= rooftopHeight + 0.5 && hero.velocity.y <= 0) {
+          onAnyRooftop = true;
+          currentRooftop = rooftop;
+          
+          // Mark hero as having reached second rooftop when they land on it
+          if (rooftop.userData.id === 1 && !hero.hasReachedSecondRooftop) {
+            hero.hasReachedSecondRooftop = true;
+          }
+          
+          break;
         }
-        
-        break;
       }
     }
     
@@ -298,7 +306,7 @@ export function animationLoop(
 
     if (onAnyRooftop && currentRooftop) {
       // Check if we were falling and now landed on a rooftop
-      if (!hero.grounded) {
+      if (!hero.grounded || hero.velocity.y < 0) {
         hero.grounded = true;
         hero.velocity.y = 0;
         // Ensure hero is exactly at the rooftop level
@@ -325,9 +333,9 @@ export function animationLoop(
     // After all the updates and before rendering
     
     // Check if the player has reached the next stage in Level 3
-    if (gameState.gamePhase === "gameplay") {
-      checkLevelThreeStageTransition(hero, scene, minions, gameState.currentLevel, levelIndicator, createMinion, instructions);
-    }
+    // if (gameState.gamePhase === "gameplay") {
+    //   checkLevelThreeStageTransition(hero, scene, minions, gameState.currentLevel, levelIndicator, createMinion, instructions);
+    // }
     
     // Render scene
     renderer.render(scene, camera);
