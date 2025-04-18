@@ -29,7 +29,11 @@ export function initHero(scene) {
     hasBoltAttack: false,
     boltCount: 0,
     lastBoltRespawn: 0,
-    boltRespawnCooldown: 10000 // 10 seconds between respawns
+    boltRespawnCooldown: 10000, // 10 seconds between respawns
+    // Shield properties
+    hasShield: true,
+    shieldHealth: 100, // 100% shield
+    shieldMesh: null,  // Will hold the shield mesh
   };
 
   // Create hero sprite and glow effect
@@ -54,6 +58,19 @@ export function initHero(scene) {
   const heroGlowSprite = new THREE.Sprite(heroGlowMaterial);
   heroGlowSprite.scale.set(3.3, 3.3, 1);
   hero.group.add(heroGlowSprite);
+
+  // Create shield visualization (spherical shield around the hero)
+  const shieldGeometry = new THREE.SphereGeometry(2, 24, 24);
+  const shieldMaterial = new THREE.MeshBasicMaterial({
+    color: 0x8B4513, // Brown color
+    transparent: true,
+    opacity: 0.2,
+    side: THREE.DoubleSide,
+    wireframe: false
+  });
+  const shieldMesh = new THREE.Mesh(shieldGeometry, shieldMaterial);
+  hero.group.add(shieldMesh);
+  hero.shieldMesh = shieldMesh;
 
   hero.group.position.set(0, hero.position.y, 0);
   scene.add(hero.group);
@@ -189,6 +206,18 @@ export function initHero(scene) {
         scene.remove(afterimageSprite);
       }
     })();
+  };
+
+  // Update shield visibility based on shield health
+  hero.updateShield = function() {
+    if (this.hasShield && this.shieldHealth > 0) {
+      // Show shield with opacity based on health percentage
+      this.shieldMesh.visible = true;
+      this.shieldMesh.material.opacity = 0.2 + (this.shieldHealth / 100) * 0.3; // Opacity from 0 to 0.5 based on health
+    } else {
+      // Hide shield when depleted
+      this.shieldMesh.visible = false;
+    }
   };
 
   // Expose heroSprite and heroGlowSprite for other modules

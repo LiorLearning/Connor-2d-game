@@ -25,7 +25,7 @@ export function handleEnemyIndicators(hero, minions) {
       const distance = Math.abs(hero.position.x - minion.group.position.x);
       
       // If minion is within attack range
-      if (distance < 5) {
+      if (distance < 15) {
         anyMinionInRange = true;
       }
     }
@@ -88,7 +88,7 @@ export function processHeroAttack(hero, minions, scene, minionsFought, totalMini
   minions.forEach(minion => {
     if (!minion.defeated) {
       const distance = Math.abs(minion.group.position.x - hero.position.x);
-      if (distance < 5 && distance < nearestDistance) {
+      if (distance < 15 && distance < nearestDistance) {
         nearestMinion = minion;
         nearestDistance = distance;
       }

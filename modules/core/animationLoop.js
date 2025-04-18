@@ -267,6 +267,11 @@ export function animationLoop(
     // Subtle hover animation for hero sprite and update glow opacity.
     hero.sprite.position.y = Math.sin(Date.now() * 0.003) * 0.1;
     hero.glowSprite.material.opacity = 0.3 + Math.sin(Date.now() * 0.004) * 0.1;
+    
+    // Update shield visualization
+    if (hero.updateShield) {
+      hero.updateShield();
+    }
 
     // Update villain particles only (hero trail removed)
     trail.update();

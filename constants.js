@@ -147,7 +147,7 @@ export const ENVIRONMENT = {
     GRAVITY: 0.015,
     GROUND_FRICTION: 0.85,
     HERO_HALF_WIDTH: 1.0,
-    ATTACK_RANGE: 3.0
+    ATTACK_RANGE: 15.0
   };
   
   // UI settings

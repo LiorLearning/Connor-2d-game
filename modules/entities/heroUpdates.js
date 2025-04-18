@@ -102,18 +102,30 @@ export function handleHeroFalling(hero, camera, villain, minions, scene, gameSta
 
 export function handleHeroInvulnerability(hero) {
   if (hero.isInvulnerable) {
-    // Flash hero to show invulnerability
-    const flashRate = 150; // ms
+    // Check if this is math-based invincibility (has purple glow)
+    const isMathInvincibility = hero.glowSprite.material.color.r > 0.9 && 
+                                hero.glowSprite.material.color.b > 0.9;
+    
+    if (!isMathInvincibility) {
+      // Regular damage-based invincibility - use the flashing effect
+      const flashRate = 150; // ms
+      const now = Date.now();
+      const flashPhase = Math.floor((now - hero.lastHit) / flashRate) % 2;
+      
+      // Toggle visibility based on flash phase
+      hero.sprite.material.opacity = flashPhase === 0 ? 1.0 : 0.3;
+    }
+    
+    // Check if invulnerability period is over (for both types)
     const now = Date.now();
-    const flashPhase = Math.floor((now - hero.lastHit) / flashRate) % 2;
-    
-    // Toggle visibility based on flash phase
-    hero.sprite.material.opacity = flashPhase === 0 ? 1.0 : 0.3;
-    
-    // Check if invulnerability period is over
     if (now - hero.lastHit > hero.invulnerableTime) {
       hero.isInvulnerable = false;
-      hero.sprite.material.opacity = 1.0; // Restore normal opacity
+      
+      // Reset appearance to normal
+      hero.sprite.material.opacity = 1.0;
+      hero.sprite.material.color.set(0xffffff);
+      hero.glowSprite.material.color.set(0x00ffff);
+      hero.glowSprite.material.opacity = 0.3;
     }
   }
 } 

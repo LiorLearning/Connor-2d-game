@@ -498,10 +498,14 @@ export function createBoltProjectile(scene, hero, minion, attackDirection) {
   
   // Animate projectile
   const projectileStartTime = Date.now();
-  const projectileDuration = 150; // Slightly faster than smoke bomb
   const startX = projectile.position.x;
   const targetX = minion.group.position.x;
   const totalDistance = targetX - startX;
+  
+  // Adjust projectile duration based on distance
+  const baseDuration = 150;
+  const distanceFactor = Math.min(2.5, Math.abs(totalDistance) / 5);
+  const projectileDuration = baseDuration * distanceFactor;
   
   (function animateProjectile() {
     const elapsed = Date.now() - projectileStartTime;

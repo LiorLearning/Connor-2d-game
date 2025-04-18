@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { createNotification } from '../ui/interface.js';
 import { createMinionHitEffect, createMinionSpawnEffect, createMinion } from './minion.js';
 import { advanceToNextLevel } from '../gameplay/levelManager.js';
+import { showMathQuiz } from '../ui/mathQuiz.js';
 
 // Export minion update functions
 export function updateMinions(hero, minions, scene, triggerScreenShake, updateHealthBar) {
@@ -558,12 +559,39 @@ function createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAm
       // Use smaller collision radius for bullet
       if (projectileToHeroDistance < 0.7) { 
         // Hero was hit by bullet
-        hero.health -= minion.damage; // Use minion's damage value
+        if (hero.hasShield && hero.shieldHealth > 0) {
+          // Reduce shield by 33%
+          hero.shieldHealth -= 33;
+          
+          // Update shield visual
+          hero.updateShield();
+          
+          // Create shield hit notification
+          createNotification('-33% SHIELD!', { 
+            color: '#8B4513', 
+            duration: 800,
+            fontSize: '24px'
+          });
+          
+          // Check if shield is depleted
+          if (hero.shieldHealth <= 0) {
+            hero.hasShield = false;
+            // Show math quiz to restore shield after a short delay
+            setTimeout(() => {
+              showShieldRestorationQuiz(hero);
+            }, 1000);
+          }
+        } else {
+          // No shield, damage health directly
+          hero.health -= minion.damage; // Use minion's damage value
+          
+          // Update health bar
+          updateHealthBar(hero.health);
+        }
+        
+        // Set invulnerability regardless of shield
         hero.lastHit = Date.now();
         hero.isInvulnerable = true; // Grant invulnerability frames
-
-        // Update health bar
-        updateHealthBar(hero.health);
 
         // Trigger screen shake on hit
         triggerScreenShake(0.1, 150);
@@ -572,7 +600,7 @@ function createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAm
         const impactEffect = new THREE.Mesh(
           new THREE.CircleGeometry(0.4, 12),
           new THREE.MeshBasicMaterial({
-            color: 0xffaa00, // Orange/gold impact
+            color: hero.hasShield && hero.shieldHealth > 0 ? 0x8B4513 : 0xffaa00, // Brown if shield absorbed, orange if not
             transparent: true,
             opacity: 0.8
           })
@@ -703,12 +731,36 @@ function createRifleBulletProjectile(scene, minion, hero, attackDirection, hover
       // Use smaller collision radius for rifle bullet
       if (projectileToHeroDistance < 0.7) { 
         // Hero was hit by rifle bullet
-        hero.health -= minion.damage; // Use minion's damage value (20 for rifle)
+        if (hero.hasShield && hero.shieldHealth > 0) {
+          // Completely destroy shield (100%)
+          hero.shieldHealth = 0;
+          hero.hasShield = false;
+          
+          // Update shield visual
+          hero.updateShield();
+          
+          // Create shield destruction notification
+          createNotification('SHIELD DESTROYED!', { 
+            color: '#8B4513', 
+            duration: 1000,
+            fontSize: '24px'
+          });
+          
+          // Show math quiz to restore shield after a short delay
+          setTimeout(() => {
+            showShieldRestorationQuiz(hero);
+          }, 1000);
+        } else {
+          // No shield, damage health directly
+          hero.health -= minion.damage; // Use minion's damage value (20 for rifle)
+          
+          // Update health bar
+          updateHealthBar(hero.health);
+        }
+        
+        // Set invulnerability regardless of shield
         hero.lastHit = Date.now();
         hero.isInvulnerable = true; // Grant invulnerability frames
-
-        // Update health bar
-        updateHealthBar(hero.health);
 
         // Trigger screen shake on hit - stronger shake for rifle
         triggerScreenShake(0.15, 180);
@@ -717,7 +769,7 @@ function createRifleBulletProjectile(scene, minion, hero, attackDirection, hover
         const impactEffect = new THREE.Mesh(
           new THREE.CircleGeometry(0.5, 12),
           new THREE.MeshBasicMaterial({
-            color: 0xff2222, // Red impact
+            color: hero.hasShield ? 0x8B4513 : 0xff2222, // Brown if shield absorbed, red if not
             transparent: true,
             opacity: 0.8
           })
@@ -773,26 +825,53 @@ function processMinionMeleeAttack(minion, hero, scene, triggerScreenShake, updat
 
     // Only damage hero if not invulnerable
     if (!hero.isInvulnerable) {
-      // Damage hero
-      hero.health -= 10;
-      hero.lastHit = now;
-      hero.isInvulnerable = true;
-
-      // Update health bar
-      updateHealthBar(hero.health);
-
       // Determine direction for projectile
       const attackDirection = minion.group.position.x < hero.position.x ? 1 : -1;
 
       // Create and animate melee projectile effect
       createMinionMeleeProjectile(scene, minion, hero, attackDirection);
 
-      // Create hit notification
-      createNotification('-10 HP', { 
-        color: '#ff3333', 
-        duration: 500,
-        fontSize: '28px'
-      });
+      // Check if hero has shield
+      if (hero.hasShield && hero.shieldHealth > 0) {
+        // Reduce shield by 50% for melee attack
+        hero.shieldHealth -= 50;
+        
+        // Update shield visual
+        hero.updateShield();
+        
+        // Create shield hit notification
+        createNotification('-50% SHIELD!', { 
+          color: '#8B4513', 
+          duration: 800,
+          fontSize: '24px'
+        });
+        
+        // Check if shield is depleted
+        if (hero.shieldHealth <= 0) {
+          hero.hasShield = false;
+          // Show math quiz to restore shield after a short delay
+          setTimeout(() => {
+            showShieldRestorationQuiz(hero);
+          }, 1000);
+        }
+      } else {
+        // No shield, damage health directly
+        hero.health -= 10;
+        
+        // Update health bar
+        updateHealthBar(hero.health);
+        
+        // Create hit notification
+        createNotification('-10 HP', { 
+          color: '#ff3333', 
+          duration: 500,
+          fontSize: '28px'
+        });
+      }
+      
+      // Set invulnerability regardless of shield
+      hero.lastHit = now;
+      hero.isInvulnerable = true;
     }
   }
 }
@@ -1008,4 +1087,47 @@ export function checkLevelThreeStageTransition(hero, scene, minions, currentLeve
       }, 1000);
     }
   }
+}
+
+// Function to show a math quiz for shield restoration
+function showShieldRestorationQuiz(hero) {
+  // Lock movement during quiz
+  if (window.gameState) {
+    window.gameState.movementLocked = true;
+  }
+  
+  // Create notification about shield restoration
+  createNotification(
+    'SHIELD DEPLETED!<br><span style="font-size: 18px">Answer math questions to restore it!</span>',
+    { color: '#8B4513', duration: 2000 }
+  );
+  
+  // Show the quiz with a custom callback for shield restoration
+  setTimeout(() => {
+    // Create a special gameState with a callback to restore shield
+    const shieldRestoreState = {
+      movementLocked: true,
+      onQuizComplete: function(earnedPoints) {
+        // Restore shield based on correct answers
+        hero.hasShield = true;
+        hero.shieldHealth = Math.min(100, earnedPoints * 25); // Each correct answer = 25% shield
+        
+        // Update shield visual
+        hero.updateShield();
+        
+        // Show notification
+        createNotification(
+          `SHIELD RESTORED: ${hero.shieldHealth}%!`,
+          { color: '#8B4513', duration: 2000 }
+        );
+        
+        // Explicitly ensure movement is unlocked
+        if (window.gameState) {
+          window.gameState.movementLocked = false;
+        }
+      }
+    };
+    
+    showMathQuiz(hero, shieldRestoreState);
+  }, 2500);
 } 
