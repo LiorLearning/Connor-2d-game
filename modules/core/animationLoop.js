@@ -3,6 +3,8 @@ import { updateDodgeIndicator } from './controls.js';
 import { showMathQuiz } from '../ui/mathQuiz.js';
 import { createMinion } from '../entities/minion.js';
 import { loadTextures } from '../utils/textureLoader.js';
+import { worldToScreen } from './scene.js';
+import { createBoltCounter, updateBoltCounter, spawnBoltOnFirstRooftop, createBoltProjectile, createBoltExplosion } from '../collectibles/bolt.js';
 
 function createSmokeExplosion(scene, position, smokeBombTexture) {
   const smokeParticleCount = 20;
@@ -527,7 +529,7 @@ function createMinionMeleeProjectile(scene, minion, hero, attackDirection) {
   })();
 }
 
-function handleJumpPrompt(hero, currentRooftop, minions, smokeBombCollectible) {
+function handleJumpPrompt(hero, currentRooftop, minions, boltCollectible) {
   if (currentRooftop && currentRooftop.userData.id === 0) {
     // If on first rooftop and near the right edge, show a jump prompt
     // Only show jump prompt if there are no active minions nearby
@@ -552,7 +554,7 @@ function handleJumpPrompt(hero, currentRooftop, minions, smokeBombCollectible) {
         pointerEvents: 'none'
       });
       
-      // Customize text based on whether smoke bomb has been collected
+      // Customize text based on whether bolt has been collected
       let promptText = '→ JUMP! →';
       
       // Only show super jump instructions if player hasn't jumped to second rooftop yet
@@ -560,9 +562,9 @@ function handleJumpPrompt(hero, currentRooftop, minions, smokeBombCollectible) {
         promptText += '<br>Press SPACE for a super jump!';
       }
       
-      // Only show smoke bomb collection instructions if not collected yet
-      if (!smokeBombCollectible.collected) {
-        promptText += '<br><span style="color: #00ffaa; font-size: 16px;">Collect the smoke bomb!</span>';
+      // Only show bolt collection instructions if not collected yet
+      if (!boltCollectible.collected) {
+        promptText += '<br><span style="color: #00ffaa; font-size: 16px;">Collect the bolt!</span>';
       }
       
       jumpPrompt.innerHTML = promptText;
@@ -597,7 +599,7 @@ export function animationLoop(
   gameState, 
   minions, 
   jumpBoostIndicator, 
-  smokeBombCollectible,
+  boltCollectible,
   updateHealthBar,
   createMinion,
   speechBubble,
@@ -623,9 +625,9 @@ export function animationLoop(
         // Update dodge indicator
         updateDodgeIndicator(hero);
         
-        // Check if player collected the smoke bomb
-        if (!smokeBombCollectible.collected && smokeBombCollectible.checkCollision(hero.position)) {
-          smokeBombCollectible.collect();
+        // Check if player collected the bolt
+        if (!boltCollectible.collected && boltCollectible.checkCollision(hero.position)) {
+          boltCollectible.collect();
           
           // Pause game by locking movement
           gameState.movementLocked = true;
@@ -857,7 +859,7 @@ export function animationLoop(
     handleHeroInvulnerability(hero);
     
     // Add directional indicator for the next rooftop if the hero is near the edge
-    handleJumpPrompt(hero, currentRooftop, minions, smokeBombCollectible);
+    handleJumpPrompt(hero, currentRooftop, minions, boltCollectible);
 
     renderer.render(scene, camera);
   }
@@ -989,7 +991,7 @@ function handleHeroInvulnerability(hero) {
 function spawnMinions(scene, currentRooftop, minions, currentLevel, hero, instructions) {
   // Create minion spawn animation and notification
   createNotification(
-    'SMOKE\'S MINIONS APPEAR!<br><span style="font-size: 20px">Defeat 3 of 20 minions</span>',
+    'BOLT\'S MINIONS APPEAR!<br><span style="font-size: 20px">Defeat 3 of 20 minions</span>',
     { color: '#ff33ff', fontSize: '28px', duration: 2000 }
   );
   
@@ -1010,60 +1012,46 @@ function spawnMinions(scene, currentRooftop, minions, currentLevel, hero, instru
   }
   
   // Update instructions
-  instructions.innerHTML = hero.hasSmokeAttack ? 
-    'SMOKE\'S MINIONS BLOCK YOUR PATH! Press E or F to attack!' :
-    'SMOKE\'S MINIONS BLOCK YOUR PATH! Find smoke bombs to attack!';
+  instructions.innerHTML = hero.hasBoltAttack ? 
+    'BOLT\'S MINIONS BLOCK YOUR PATH! Press E or F to attack!' :
+    'BOLT\'S MINIONS BLOCK YOUR PATH! Find bolts to attack!';
 }
 
 function handleEnemyIndicators(hero, minions) {
-  const attackRange = 5.0; // Increased from 3.0 - How close hero needs to be to hit minion
-  let enemyInRange = false;
+  const attackPrompt = document.getElementById('attackPrompt');
+  
+  // Create attack prompt if it doesn't exist yet
+  if (!attackPrompt) {
+    createAttackPrompt(hero);
+    return; // Return and let the next animation frame handle the rest
+  }
+  
+  const attackPromptText = document.getElementById('attackPromptText');
+  
+  if (!attackPrompt || !attackPromptText) return;
+  
+  let anyMinionInRange = false;
   
   minions.forEach(minion => {
-    if (minion.active) {
-      // Calculate distance to minion
+    if (minion.active && !minion.defeated) {
       const distance = Math.abs(hero.position.x - minion.group.position.x);
       
-      // If minion is in attack range
-      if (distance < attackRange) {
-        enemyInRange = true;
-        
-        // Add indicator to the minion if not already present
-        if (!minion.indicator) {
-          const indicatorGeometry = new THREE.RingGeometry(1.2, 1.3, 32);
-          const indicatorMaterial = new THREE.MeshBasicMaterial({ 
-            color: 0xff3333,
-            transparent: true,
-            opacity: 0.7,
-            side: THREE.DoubleSide
-          });
-          const indicator = new THREE.Mesh(indicatorGeometry, indicatorMaterial);
-          indicator.rotation.x = -Math.PI / 2; // Lay flat on ground
-          indicator.position.y = -1.45; // Position at minion's feet
-          
-          minion.indicator = indicator;
-          minion.group.add(indicator);
-        } else {
-          // Update existing indicator visibility
-          minion.indicator.visible = true;
-          
-          // Pulse the indicator
-          const pulseScale = 1 + Math.sin(Date.now() * 0.008) * 0.2;
-          minion.indicator.scale.set(pulseScale, pulseScale, 1);
-        }
-      } else if (minion.indicator) {
-        // Hide indicator if enemy not in range
-        minion.indicator.visible = false;
+      // If minion is within attack range
+      if (distance < 5) {
+        anyMinionInRange = true;
       }
     }
   });
   
-  // Update attack prompt based on enemies in range
-  if (enemyInRange && !document.getElementById('attackPrompt')) {
-    createAttackPrompt(hero);
-  } else if (!enemyInRange && document.getElementById('attackPrompt')) {
-    const attackPrompt = document.getElementById('attackPrompt');
-    document.getElementById('renderDiv').removeChild(attackPrompt);
+  if (anyMinionInRange) {
+    // Display attack prompt when minions are in range
+    attackPrompt.style.display = 'block';
+    attackPromptText.textContent = 
+      hero.hasBoltAttack ? 
+      `ENEMY IN RANGE! Press E or F to attack (${hero.boltCount} bolts left)` :
+      'ENEMY IN RANGE! Get lightning bolts to attack';
+  } else {
+    attackPrompt.style.display = 'none';
   }
 }
 
@@ -1083,201 +1071,90 @@ function createAttackPrompt(hero) {
     padding: '10px 20px',
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     borderRadius: '10px',
-    pointerEvents: 'none'
+    pointerEvents: 'none',
+    display: 'none' // Start hidden
   });
   
-  attackPrompt.innerHTML = hero.hasSmokeAttack ? 
-    `ENEMY IN RANGE! Press E or F to attack (${hero.smokeBombsCount} bombs left)` :
-    'ENEMY IN RANGE! Find smoke bombs to attack';
+  // Create the text element inside the prompt
+  const attackPromptText = document.createElement('span');
+  attackPromptText.id = 'attackPromptText';
+  attackPromptText.textContent = hero.hasBoltAttack ? 
+    `ENEMY IN RANGE! Press E or F to attack (${hero.boltCount} bolts left)` :
+    'ENEMY IN RANGE! Get lightning bolts to attack';
     
+  attackPrompt.appendChild(attackPromptText);
   document.getElementById('renderDiv').appendChild(attackPrompt);
+  
+  return attackPrompt;
 }
 
 function processHeroAttack(hero, minions, scene, minionsFought, totalMinions, 
   currentLevel, levelIndicator, updateHealthBar, trail, createMinion, instructions, gameState) {
   
-  // Get current time for attack cooldown
   const now = Date.now();
   
-  // Check if hero is in attack range of any minion
-  const attackRange = 5.0; // Increased from 3.0 - How close hero needs to be to hit minion
-  let hasAttacked = false;
+  // Check for minions in range
+  let nearestMinion = null;
+  let nearestDistance = Infinity;
   
-  // Only process attack if not on cooldown and hero has smoke bombs
-  if (now - hero.lastAttack > 500 && hero.hasSmokeAttack && hero.smokeBombsCount > 0) {
-    minions.forEach(minion => {
-      if (minion.active) {
-        // Calculate distance to minion
-        const distance = Math.abs(hero.position.x - minion.group.position.x);
-        
-        // If within range, attack
-        if (distance < attackRange) {
-          hasAttacked = true;
-          
-          // Set attack cooldown
-          hero.lastAttack = now;
-          
-          // Determine direction for projectile
-          const attackDirection = hero.position.x < minion.group.position.x ? 1 : -1;
-          
-          // Create and animate projectile
-          createSmokeBombProjectile(scene, hero, minion, attackDirection);
-          
-          // Damage minion
-          minion.health -= 25; // 4 hits to defeat
-          
-          // Update minion health bar
-          updateMinionHealthBar(minion);
-          
-          // Minion hit effect - flash and knockback
-          minion.group.children[0].material.color.set(0xffffff);
-          setTimeout(() => {
-            if (minion.active) {
-              minion.group.children[0].material.color.set(0xbbbbff);
-            }
-          }, 100);
-          
-          // Check if minion is defeated
-          if (minion.health <= 0) {
-            defeatedMinion(minion, scene, minionsFought, totalMinions, 
-              currentLevel, levelIndicator, hero, updateHealthBar, trail, createMinion, minions, instructions);
-            minionsFought++;
-          }
-        }
+  minions.forEach(minion => {
+    if (!minion.defeated) {
+      const distance = Math.abs(minion.group.position.x - hero.position.x);
+      if (distance < 5 && distance < nearestDistance) {
+        nearestMinion = minion;
+        nearestDistance = distance;
       }
-    });
-    
-    // If any minion was attacked, process the hero's attack
-    if (hasAttacked) {
-      // Decrease smoke bomb count
-      hero.smokeBombsCount--;
-      
-      // Update smoke bomb counter
-      updateSmokeBombCounter(hero);
-      
-      // Check if ran out of smoke bombs
-      if (hero.smokeBombsCount <= 0) {
-        // Show out of bombs notification
-        createNotification('OUT OF SMOKE BOMBS!', { 
-          color: '#ff3333', 
-          duration: 1500
-        });
-        
-        // Check if it's time to respawn a smoke bomb on the first rooftop
-        const now = Date.now();
-        if (now - hero.lastSmokeBombRespawn > hero.smokeBombRespawnCooldown) {
-          // Respawn if the player has zero bombs (regardless of current rooftop)
-          spawnSmokeBombOnFirstRooftop(scene, hero, gameState, showMathQuiz);
-          hero.lastSmokeBombRespawn = now;
-        }
-      }
-      
-      // Show attack animation on hero
-      const originalColor = hero.sprite.material.color.clone();
-      const originalGlowColor = hero.glowSprite.material.color.clone();
-      const originalGlowOpacity = hero.glowSprite.material.opacity;
-      
-      // Enhance colors for attack
-      hero.sprite.material.color.set(0xffffff);
-      hero.glowSprite.material.color.set(0x00ffff);
-      hero.glowSprite.material.opacity = 0.6;
-      
-      // Reset after short delay
-      setTimeout(() => {
-        hero.sprite.material.color.copy(originalColor);
-        hero.glowSprite.material.color.copy(originalGlowColor);
-        hero.glowSprite.material.opacity = originalGlowOpacity;
-      }, 150);
     }
-  }
-}
-
-function createSmokeBombProjectile(scene, hero, minion, attackDirection) {
-  // Load textures
-  const { smokeBombTexture } = loadTextures();
-  
-  // Create smoke bomb sprite
-  const projectileMaterial = new THREE.SpriteMaterial({
-    map: smokeBombTexture,
-    transparent: true,
-    opacity: 1.0
   });
-  const projectile = new THREE.Sprite(projectileMaterial);
   
-  // Size the smoke bomb appropriately
-  projectile.scale.set(0.8, 0.8, 1);
-  
-  // Position projectile at hero's position
-  projectile.position.set(
-    hero.position.x + (attackDirection * 0.8), 
-    hero.position.y, 
-    0
-  );
-  
-  scene.add(projectile);
-  
-  // Create smoke trail particles
-  const particleCount = 8;
-  const particles = [];
-  
-  for (let i = 0; i < particleCount; i++) {
-    const particleMaterial = new THREE.SpriteMaterial({
-      map: smokeBombTexture,
-      transparent: true,
-      opacity: 0.4
-    });
+  if (nearestMinion) {
+    // Determine attack direction
+    const attackDirection = nearestMinion.group.position.x > hero.position.x ? 1 : -1;
     
-    const particle = new THREE.Sprite(particleMaterial);
-    particle.scale.set(0.3, 0.3, 1);
-    particle.position.copy(projectile.position);
-    scene.add(particle);
-    particles.push(particle);
-  }
-  
-  // Animate projectile
-  const projectileStartTime = Date.now();
-  const projectileDuration = 200;
-  const startX = projectile.position.x;
-  const targetX = minion.group.position.x;
-  const totalDistance = targetX - startX;
-  
-  (function animateProjectile() {
-    const elapsed = Date.now() - projectileStartTime;
-    if (elapsed < projectileDuration) {
-      const progress = elapsed / projectileDuration;
+    // If hero has bolt attack and cooldown has elapsed
+    if (now - hero.lastAttack > 500 && hero.hasBoltAttack && hero.boltCount > 0) {
+      // Update last attack time to prevent rapid firing
+      hero.lastAttack = now;
       
-      // Move projectile toward target with slight arc
-      projectile.position.x = startX + (progress * totalDistance);
-      projectile.position.y = hero.position.y + Math.sin(progress * Math.PI) * 0.5;
+      // Add attack animation effect
+      hero.sprite.material.color.set(0x00ffff);
+      setTimeout(() => {
+        hero.sprite.material.color.set(0xffffff);
+      }, 100);
       
-      // Spin the smoke bomb as it flies
-      projectile.material.rotation += 0.1;
+      // Create bolt projectile
+      createBoltProjectile(scene, hero, nearestMinion, attackDirection);
       
-      // Update smoke trail particles
-      for (let i = 0; i < particles.length; i++) {
-        const particle = particles[i];
-        // Position particles along the path with different offsets
-        const particleProgress = Math.max(0, progress - (i * 0.05));
-        if (particleProgress > 0) {
-          particle.position.x = startX + (particleProgress * totalDistance);
-          particle.position.y = hero.position.y + Math.sin(particleProgress * Math.PI) * 0.5;
-          
-          // Fade out particles based on their position in the trail
-          particle.material.opacity = 0.4 * (1 - particleProgress);
-          // Gradually reduce scale of trailing particles
-          const scale = 0.3 * (1 - particleProgress * 0.7);
-          particle.scale.set(scale, scale, 1);
-        }
+      // Apply damage to minion
+      nearestMinion.health -= 50;
+      
+      // Update minion health bar
+      updateMinionHealthBar(nearestMinion);
+      
+      // Decrease bolt count
+      hero.boltCount--;
+      
+      // Update bolt counter UI
+      updateBoltCounter(hero);
+      
+      // Check if minion is defeated
+      if (nearestMinion.health <= 0) {
+        defeatedMinion(nearestMinion, scene, minionsFought, totalMinions, 
+          currentLevel, levelIndicator, hero, updateHealthBar, trail, createMinion, minions, instructions);
       }
       
-      requestAnimationFrame(animateProjectile);
-    } else {
-      // Create smoke explosion at impact
-      createSmokeExplosion(scene, minion.group.position, smokeBombTexture);
+      // Hide attack prompt if out of bolts
+      if (hero.boltCount <= 0) {
+        hero.hasBoltAttack = false;
+        document.getElementById('attackPromptText').textContent = 'ENEMY IN RANGE! Get more lightning bolts';
+      }
       
-      // Remove projectile and particles
-      scene.remove(projectile);
-      particles.forEach(particle => scene.remove(particle));
+      // Check if enough time has passed to respawn a collectible
+      if (now - hero.lastBoltRespawn > hero.boltRespawnCooldown) {
+        // Respawn a collectible on the first rooftop
+        spawnBoltOnFirstRooftop(scene, hero, gameState, showMathQuiz);
+        hero.lastBoltRespawn = now;
+      }
     }
-  })();
+  }
 }

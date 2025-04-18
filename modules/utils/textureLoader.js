@@ -11,7 +11,7 @@ const textureOptions = {
 };
 
 // Load and cache all textures
-let ninjaTexture, villainTexture, smokeBombTexture, minionTexture;
+let ninjaTexture, villainTexture, smokeBombTexture, minionTexture, boltTexture;
 
 export function loadTextures() {
   // Load all textures if not already loaded
@@ -38,6 +38,13 @@ export function loadTextures() {
       undefined, undefined, undefined, textureOptions
     );
   }
+
+  if (!boltTexture) {
+    boltTexture = textureLoader.load(
+      './assets/bolt.png',
+      undefined, undefined, undefined, textureOptions
+    );
+  }
   
   if (!minionTexture && villainTexture) {
     // Reuse villain texture for minions
@@ -48,6 +55,7 @@ export function loadTextures() {
     ninjaTexture,
     villainTexture,
     smokeBombTexture,
-    minionTexture
+    minionTexture,
+    boltTexture
   };
 }

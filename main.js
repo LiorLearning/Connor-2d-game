@@ -8,7 +8,7 @@ import { initUI } from './modules/ui/interface.js';
 import { setupControls } from './modules/core/controls.js';
 import { initTrail } from './modules/effects/trail.js';
 import { createJumpBoostIndicator } from './modules/environment/jumpBoost.js';
-import { createSmokeBombCollectible } from './modules/collectibles/smokeBomb.js';
+import { createBoltCollectible } from './modules/collectibles/bolt.js';
 import { showMathQuiz } from './modules/ui/mathQuiz.js';
 import { createMinion } from './modules/entities/minion.js';
 import { animationLoop } from './modules/core/animationLoop.js';
@@ -50,7 +50,7 @@ function initGame() {
   };
   
   // Create collectibles
-  const smokeBombCollectible = createSmokeBombCollectible(scene, hero, gameState, showMathQuiz);
+  const boltCollectible = createBoltCollectible(scene, hero, gameState, showMathQuiz);
   
   // Initialize effects
   const trail = initTrail(scene);
@@ -75,7 +75,7 @@ function initGame() {
     gameState, 
     minions, 
     jumpBoostIndicator, 
-    smokeBombCollectible,
+    boltCollectible,
     updateHealthBar,
     createMinion,
     speechBubble,

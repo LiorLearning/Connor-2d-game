@@ -14,7 +14,7 @@ export function initHero(scene) {
     group: new THREE.Group(),
     lastAttack: 0, // For attack cooldown
     health: 100,   // Add hero health
-    lastHit: 0,    // For invincibility frames after being hit
+    lastHit: 0,    // For invulnerability frames after being hit
     invulnerableTime: 1000, // 1 second of invulnerability after being hit
     isInvulnerable: false,
     isDodging: false,
@@ -25,11 +25,11 @@ export function initHero(scene) {
     dodgeCooldown: 1000, // milliseconds
     lastDodge: 0,
     hasReachedSecondRooftop: false,
-    // Smoke bomb properties
-    hasSmokeAttack: false,
-    smokeBombsCount: 0,
-    lastSmokeBombRespawn: 0,
-    smokeBombRespawnCooldown: 10000 // 10 seconds between respawns
+    // Bolt properties
+    hasBoltAttack: false,
+    boltCount: 0,
+    lastBoltRespawn: 0,
+    boltRespawnCooldown: 10000 // 10 seconds between respawns
   };
 
   // Create hero sprite and glow effect

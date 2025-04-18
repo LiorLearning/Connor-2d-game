@@ -1,5 +1,6 @@
 import { createSmokeBombCounter, updateSmokeBombCounter } from '../collectibles/smokeBomb.js';
 import { createNotification } from './interface.js';
+import { createBoltCounter, updateBoltCounter } from '../collectibles/bolt.js';
 
 export function showMathQuiz(hero, gameState) {
   // Create an array of math questions and answers
@@ -236,7 +237,7 @@ export function showMathQuiz(hero, gameState) {
     questionContainer.innerHTML = '';
     
     // Calculate earned smoke bombs (2 per correct answer)
-    const earnedSmokeBombs = correctAnswers * 2;
+    const earnedBolts = correctAnswers * 2;
     
     // Create results container
     const resultsContainer = document.createElement('div');
@@ -266,7 +267,7 @@ export function showMathQuiz(hero, gameState) {
     
     // Add smoke bombs earned
     const bombsEarned = document.createElement('p');
-    bombsEarned.innerHTML = `<span style="color: #00ffff; font-size: 24px; font-weight: bold;">${earnedSmokeBombs}</span> smoke bombs earned!`;
+    bombsEarned.innerHTML = `<span style="color: #00ffff; font-size: 24px; font-weight: bold;">${earnedBolts}</span> lightning bolts earned!`;
     Object.assign(bombsEarned.style, {
       fontSize: '18px',
       marginBottom: '20px'
@@ -311,20 +312,20 @@ export function showMathQuiz(hero, gameState) {
       
       // Set hero's smoke bomb properties
       if (hero) {
-        hero.hasSmokeAttack = true;
-        hero.smokeBombsCount = earnedSmokeBombs;
+        hero.hasBoltAttack = true;
+        hero.boltCount = earnedBolts;
         
         // Show collection notification
         createNotification(
-          `${earnedSmokeBombs} SMOKE BOMBS ACQUIRED!<br><span style="font-size: 18px">Use E or F to attack minions</span>`,
-          { duration: 2000 }
+          `${earnedBolts} LIGHTNING BOLTS ACQUIRED!<br><span style="font-size: 18px">Use E or F to attack minions</span>`,
+          { color: '#00ffff', duration: 3000 }
         );
         
         // Create or update smoke bomb counter UI
-        if (document.getElementById('smokeBombCounter')) {
-          updateSmokeBombCounter(hero);
+        if (document.getElementById('boltCounter')) {
+          updateBoltCounter(hero);
         } else {
-          createSmokeBombCounter(hero);
+          createBoltCounter(hero);
         }
       }
     });
