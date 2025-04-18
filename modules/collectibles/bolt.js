@@ -517,8 +517,8 @@ export function createBoltProjectile(scene, hero, minion, attackDirection) {
       // Add zigzag pattern for lightning
       projectile.position.y = hero.position.y + Math.sin(progress * Math.PI * 3) * 0.3;
       
-      // Spin the bolt as it flies
-      projectile.material.rotation += 0.15;
+      // Remove rotation so the bolt flies straight
+      // projectile.material.rotation += 0.15;
       
       // Update lightning trail particles
       for (let i = 0; i < particles.length; i++) {
