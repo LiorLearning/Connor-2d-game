@@ -39,16 +39,18 @@ function initGame() {
     levelIndicator 
   } = initUI();
   
-  // Setup game phases and state
-  let gamePhase = "intro";
-  let movementLocked = false;
-  let minionsFought = 0;
-  const totalMinions = 20;
-  let minionsSpawned = false;
-  let currentLevel = 1;
+  // Setup game phases and state as a shared object (passed by reference)
+  const gameState = {
+    gamePhase: "intro",
+    movementLocked: false,
+    minionsFought: 0,
+    totalMinions: 20,
+    minionsSpawned: false,
+    currentLevel: 1
+  };
   
   // Create collectibles
-  const smokeBombCollectible = createSmokeBombCollectible(scene, hero, movementLocked, showMathQuiz);
+  const smokeBombCollectible = createSmokeBombCollectible(scene, hero, gameState, showMathQuiz);
   
   // Initialize effects
   const trail = initTrail(scene);
@@ -57,7 +59,7 @@ function initGame() {
   const minions = [];
   
   // Setup keyboard controls
-  const keys = setupControls(gamePhase, movementLocked, hero, introOverlay, speechBubble, instructions, villain, trail);
+  const keys = setupControls(gameState, hero, introOverlay, speechBubble, instructions, villain, trail);
   
   // Start animation loop
   animationLoop(
@@ -70,15 +72,10 @@ function initGame() {
     skyline, 
     trail, 
     keys, 
-    gamePhase, 
-    movementLocked, 
+    gameState, 
     minions, 
     jumpBoostIndicator, 
     smokeBombCollectible,
-    minionsFought,
-    totalMinions,
-    minionsSpawned,
-    currentLevel,
     updateHealthBar,
     createMinion,
     speechBubble,

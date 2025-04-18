@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { updateDodgeIndicator } from './controls.js';
+import { showMathQuiz } from '../ui/mathQuiz.js';
+import { createMinion } from '../entities/minion.js';
+import { loadTextures } from '../utils/textureLoader.js';
 
 function createSmokeExplosion(scene, position, smokeBombTexture) {
   const smokeParticleCount = 20;
@@ -203,7 +206,7 @@ function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, scene, 
   }
 }
 
-function updateMinions(hero, minions, scene, triggerScreenShake) {
+function updateMinions(hero, minions, scene, triggerScreenShake, updateHealthBar) {
   minions.forEach(minion => {
     if (minion.active) {
       // Make sprite hover slightly
@@ -229,7 +232,7 @@ function updateMinions(hero, minions, scene, triggerScreenShake) {
       processMinionRangedAttack(minion, hero, scene, triggerScreenShake);
       
       // Process melee attacks
-      processMinionMeleeAttack(minion, hero, scene);
+      processMinionMeleeAttack(minion, hero, scene, triggerScreenShake, updateHealthBar);
     }
   });
 }
@@ -385,7 +388,7 @@ function processMinionRangedAttack(minion, hero, scene, triggerScreenShake) {
   }
 }
 
-function processMinionMeleeAttack(minion, hero, scene) {
+function processMinionMeleeAttack(minion, hero, scene, triggerScreenShake, updateHealthBar) {
   const now = Date.now();
   const attackDistance = 2.5; // Slightly less than hero's attack range
   const distance = Math.abs(hero.position.x - minion.group.position.x);
@@ -591,15 +594,10 @@ export function animationLoop(
   skyline, 
   trail, 
   keys, 
-  gamePhase, 
-  movementLocked, 
+  gameState, 
   minions, 
   jumpBoostIndicator, 
   smokeBombCollectible,
-  minionsFought,
-  totalMinions,
-  minionsSpawned,
-  currentLevel,
   updateHealthBar,
   createMinion,
   speechBubble,
@@ -619,9 +617,9 @@ export function animationLoop(
       return;
     }
 
-    if (gamePhase === "gameplay") {
+    if (gameState.gamePhase === "gameplay") {
       // Update hero movement only if not locked.
-      if (!movementLocked) {
+      if (!gameState.movementLocked) {
         // Update dodge indicator
         updateDodgeIndicator(hero);
         
@@ -630,10 +628,10 @@ export function animationLoop(
           smokeBombCollectible.collect();
           
           // Pause game by locking movement
-          movementLocked = true;
+          gameState.movementLocked = true;
           
           // Show math quiz dialog
-          showMathQuiz(hero, movementLocked);
+          showMathQuiz(hero, gameState);
         }
         
         // Handle dodge mechanic
@@ -809,7 +807,7 @@ export function animationLoop(
     
     // Rooftop boundaries and falling effect
     if (!onAnyRooftop && !hero.falling && hero.position.y <= 1.5) {
-      handleHeroFalling(hero, camera, villain, minions, scene, gamePhase, movementLocked, updateHealthBar);
+      handleHeroFalling(hero, camera, villain, minions, scene, gameState, updateHealthBar, speechBubble, trail);
     }
 
     if (hero.position.y < 1.5 && !hero.falling) {
@@ -835,22 +833,22 @@ export function animationLoop(
     skyline.position.x = hero.position.x * 0.4;
     
     // Check if hero has reached the second rooftop and spawn minions if needed
-    if (currentRooftop && currentRooftop.userData.id === 1 && !minionsSpawned) {
-      spawnMinions(scene, currentRooftop, minions, currentLevel, hero, instructions);
-      minionsSpawned = true;
+    if (currentRooftop && currentRooftop.userData.id === 1 && !gameState.minionsSpawned) {
+      spawnMinions(scene, currentRooftop, minions, gameState.currentLevel, hero, instructions);
+      gameState.minionsSpawned = true;
     }
     
     // Check for enemies in attack range and show indicator
     handleEnemyIndicators(hero, minions);
     
     // Combat system - handle attacks
-    if (gamePhase === "gameplay" && keys.attack && !movementLocked) {
-      processHeroAttack(hero, minions, scene, minionsFought, totalMinions, 
-        currentLevel, levelIndicator, updateHealthBar, trail, createMinion, instructions);
+    if (gameState.gamePhase === "gameplay" && keys.attack && !gameState.movementLocked) {
+      processHeroAttack(hero, minions, scene, gameState.minionsFought, gameState.totalMinions, 
+        gameState.currentLevel, levelIndicator, updateHealthBar, trail, createMinion, instructions, gameState);
     }
     
     // Update minions
-    updateMinions(hero, minions, scene, triggerScreenShake);
+    updateMinions(hero, minions, scene, triggerScreenShake, updateHealthBar);
     
     // Update hero health bar
     updateHealthBar(hero.health);
@@ -887,7 +885,7 @@ function updateSpriteOrientation(hero, villain) {
   }
 }
 
-function handleHeroFalling(hero, camera, villain, minions, scene, gamePhase, movementLocked, updateHealthBar) {
+function handleHeroFalling(hero, camera, villain, minions, scene, gameState, updateHealthBar, speechBubble, trail) {
   hero.falling = true;
   hero.grounded = false;
   
@@ -943,10 +941,10 @@ function handleHeroFalling(hero, camera, villain, minions, scene, gamePhase, mov
     minions.length = 0; // Clear the minions array
     
     // Reset game state variables
-    minionsSpawned = false;
-    minionsFought = 0;
-    gamePhase = "gameplay";
-    movementLocked = true;
+    gameState.minionsSpawned = false;
+    gameState.minionsFought = 0;
+    gameState.gamePhase = "gameplay";
+    gameState.movementLocked = true;
     
     // Update health bar
     updateHealthBar(hero.health);
@@ -960,13 +958,13 @@ function handleHeroFalling(hero, camera, villain, minions, scene, gamePhase, mov
     speechBubble.style.top = '30%';
     setTimeout(() => { speechBubble.style.opacity = '0'; }, 3000);
     
-    // After 5 seconds, create vanishing effect for villain and unlock hero movement
+    // After 2 seconds, create vanishing effect for villain and unlock hero movement
     setTimeout(() => {
       villain.fadeOut(() => {
-        movementLocked = false;
+        gameState.movementLocked = false;
         hero.createPulseEffect(trail);
       });
-    }, 5000);
+    }, 2000);
   }, 2000);
 }
 
@@ -1096,7 +1094,7 @@ function createAttackPrompt(hero) {
 }
 
 function processHeroAttack(hero, minions, scene, minionsFought, totalMinions, 
-  currentLevel, levelIndicator, updateHealthBar, trail, createMinion, instructions) {
+  currentLevel, levelIndicator, updateHealthBar, trail, createMinion, instructions, gameState) {
   
   // Get current time for attack cooldown
   const now = Date.now();
@@ -1155,7 +1153,7 @@ function processHeroAttack(hero, minions, scene, minionsFought, totalMinions,
       hero.smokeBombsCount--;
       
       // Update smoke bomb counter
-      updateSmokeBombCounter();
+      updateSmokeBombCounter(hero);
       
       // Check if ran out of smoke bombs
       if (hero.smokeBombsCount <= 0) {
@@ -1169,7 +1167,7 @@ function processHeroAttack(hero, minions, scene, minionsFought, totalMinions,
         const now = Date.now();
         if (now - hero.lastSmokeBombRespawn > hero.smokeBombRespawnCooldown) {
           // Respawn if the player has zero bombs (regardless of current rooftop)
-          spawnSmokeBombOnFirstRooftop(scene, hero, movementLocked, showMathQuiz);
+          spawnSmokeBombOnFirstRooftop(scene, hero, gameState, showMathQuiz);
           hero.lastSmokeBombRespawn = now;
         }
       }

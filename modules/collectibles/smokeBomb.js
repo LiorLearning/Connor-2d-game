@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { loadTextures } from '../utils/textureLoader.js';
 import { worldToScreen } from '../core/scene.js';
 
-export function createSmokeBombCollectible(scene, hero, movementLocked, showMathQuiz) {
+export function createSmokeBombCollectible(scene, hero, gameState, showMathQuiz) {
   // Load textures
   const { smokeBombTexture } = loadTextures();
   
@@ -133,7 +133,7 @@ export function createSmokeBombCounter(hero) {
 }
 
 // Update smoke bomb counter
-export function updateSmokeBombCounter() {
+export function updateSmokeBombCounter(hero) {
   const bombCount = document.getElementById('smokeBombCount');
   if (bombCount) {
     bombCount.textContent = `x${hero.smokeBombsCount}`;
@@ -156,7 +156,7 @@ export function updateSmokeBombCounter() {
 }
 
 // Function to spawn a smoke bomb on the first rooftop
-export function spawnSmokeBombOnFirstRooftop(scene, hero, movementLocked, showMathQuiz) {
+export function spawnSmokeBombOnFirstRooftop(scene, hero, gameState, showMathQuiz) {
   // Load textures
   const { smokeBombTexture } = loadTextures();
   
@@ -165,7 +165,7 @@ export function spawnSmokeBombOnFirstRooftop(scene, hero, movementLocked, showMa
   const yPos = 1.5; // Slightly above the rooftop
   
   // Create a directional arrow indicator for the smoke bomb
-  const arrowIndicator = createSmokeArrowIndicator(xPos, yPos);
+  const arrowIndicator = createSmokeArrowIndicator(xPos, yPos, hero);
   
   // Create a smoke bomb with the same design as the original collectible
   const respawnedBomb = {
@@ -311,7 +311,12 @@ export function spawnSmokeBombOnFirstRooftop(scene, hero, movementLocked, showMa
       })();
       
       // Pause game by locking movement
-      movementLocked = true;
+      if (typeof gameState === 'object') {
+        gameState.movementLocked = true;
+      } else {
+        // Create a proper gameState object if it doesn't exist
+        gameState = { movementLocked: true };
+      }
       
       // Show math quiz dialog - reuse the same quiz function as the initial bomb
       // Remove the arrow indicator if it exists
@@ -320,7 +325,7 @@ export function spawnSmokeBombOnFirstRooftop(scene, hero, movementLocked, showMa
         document.getElementById('renderDiv').removeChild(arrowIndicator);
       }
       
-      showMathQuiz();
+      showMathQuiz(hero, gameState);
       
       return;
     }
@@ -338,7 +343,7 @@ export function spawnSmokeBombOnFirstRooftop(scene, hero, movementLocked, showMa
 }
 
 // Create a directional arrow indicator that points to the smoke bomb
-function createSmokeArrowIndicator(targetX, targetY) {
+function createSmokeArrowIndicator(targetX, targetY, hero) {
   // Create a container for the arrow
   const arrowContainer = document.createElement('div');
   arrowContainer.id = 'smokeArrowIndicator';

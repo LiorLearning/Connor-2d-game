@@ -1,7 +1,7 @@
 import { createSmokeBombCounter, updateSmokeBombCounter } from '../collectibles/smokeBomb.js';
 import { createNotification } from './interface.js';
 
-export function showMathQuiz(hero, movementLocked) {
+export function showMathQuiz(hero, gameState) {
   // Create an array of math questions and answers
   // Generate random single-digit multiplication questions
   const mathQuestions = [];
@@ -302,23 +302,30 @@ export function showMathQuiz(hero, movementLocked) {
       document.getElementById('renderDiv').removeChild(quizContainer);
       
       // Enable hero movement
-      movementLocked = false;
+      if (gameState && typeof gameState === 'object') {
+        gameState.movementLocked = false;
+      } else if (gameState === true) {
+        // Handle case where gameState is a boolean value
+        console.log("gameState is a boolean, cannot set movementLocked property");
+      }
       
       // Set hero's smoke bomb properties
-      hero.hasSmokeAttack = true;
-      hero.smokeBombsCount = earnedSmokeBombs;
-      
-      // Show collection notification
-      createNotification(
-        `${earnedSmokeBombs} SMOKE BOMBS ACQUIRED!<br><span style="font-size: 18px">Use E or F to attack minions</span>`,
-        { duration: 2000 }
-      );
-      
-      // Create or update smoke bomb counter UI
-      if (document.getElementById('smokeBombCounter')) {
-        updateSmokeBombCounter();
-      } else {
-        createSmokeBombCounter(hero);
+      if (hero) {
+        hero.hasSmokeAttack = true;
+        hero.smokeBombsCount = earnedSmokeBombs;
+        
+        // Show collection notification
+        createNotification(
+          `${earnedSmokeBombs} SMOKE BOMBS ACQUIRED!<br><span style="font-size: 18px">Use E or F to attack minions</span>`,
+          { duration: 2000 }
+        );
+        
+        // Create or update smoke bomb counter UI
+        if (document.getElementById('smokeBombCounter')) {
+          updateSmokeBombCounter(hero);
+        } else {
+          createSmokeBombCounter(hero);
+        }
       }
     });
     

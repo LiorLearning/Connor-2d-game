@@ -1,11 +1,11 @@
-export function setupControls(gamePhase, movementLocked, hero, introOverlay, speechBubble, instructions, villain, trail) {
+export function setupControls(gameState, hero, introOverlay, speechBubble, instructions, villain, trail) {
   const keys = { left: false, right: false, jump: false, attack: false, dodge: false };
   
   document.addEventListener('keydown', (event) => {
-    if (gamePhase === "intro" && event.key === 'Enter') {
+    if (gameState.gamePhase === "intro" && event.key === 'Enter') {
       // Start gameplay and lock hero movement while villain is visible.
-      gamePhase = "gameplay";
-      movementLocked = true;
+      gameState.gamePhase = "gameplay";
+      gameState.movementLocked = true;
       document.getElementById('renderDiv').removeChild(introOverlay);
       instructions.innerHTML = 'Use ARROW KEYS or WASD to move and jump';
 
@@ -15,17 +15,17 @@ export function setupControls(gamePhase, movementLocked, hero, introOverlay, spe
       speechBubble.style.top = '30%';
       setTimeout(() => { speechBubble.style.opacity = '0'; }, 3000);
 
-      // After 5 seconds, create a vanishing effect for the villain and unlock hero movement.
+      // After 2 seconds, create a vanishing effect for the villain and unlock hero movement.
       setTimeout(() => {
         // Villain vanishing effect
         villain.fadeOut(() => {
-          movementLocked = false;
+          gameState.movementLocked = false;
           
           // Add pulse effect to hero when movement unlocks
           hero.createPulseEffect(trail);
         });
-      }, 5000);
-    } else if (gamePhase === "gameplay") {
+      }, 2000);
+    } else if (gameState.gamePhase === "gameplay") {
       switch (event.key) {
         case 'ArrowLeft':
         case 'a': keys.left = true; break;
@@ -42,7 +42,7 @@ export function setupControls(gamePhase, movementLocked, hero, introOverlay, spe
   });
 
   document.addEventListener('keyup', (event) => {
-    if (gamePhase === "gameplay") {
+    if (gameState.gamePhase === "gameplay") {
       switch (event.key) {
         case 'ArrowLeft':
         case 'a': keys.left = false; break;
