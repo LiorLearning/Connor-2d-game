@@ -13,14 +13,14 @@ import { showMathQuiz } from './modules/ui/mathQuiz.js';
 import { createMinion, createMinionSpawnEffect } from './modules/entities/minion.js';
 import { animationLoop } from './modules/core/animationLoop.js';
 import { createNotification } from './modules/ui/interface.js';
-// import { setupAudio } from './modules/core/audio.js';
+import { setupAudio } from './modules/core/audio.js';
 
 function initGame() {
   // Initialize scene, camera, renderer, and lights
   const scene = initScene();
   
   // Initialize audio
-  // const backgroundMusic = setupAudio();
+  setupAudio();
   
   // Create environment elements
   const rooftops = createRooftops(scene);
