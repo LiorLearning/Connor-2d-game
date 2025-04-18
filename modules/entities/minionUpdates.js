@@ -56,15 +56,15 @@ export function updateMinionHealthBar(minion) {
 export function spawnMinions(scene, currentRooftop, minions, currentLevel, hero, instructions) {
   // Create minion spawn animation and notification
   createNotification(
-    'BOLT\'S GUN MINIONS APPEAR!<br><span style="font-size: 20px">Defeat 3 Gun Minions</span>',
+    'BOLT\'S GUN MINIONS APPEAR!<br><span style="font-size: 20px">Defeat 4 Gun Minions</span>',
     { color: '#ffaa00', fontSize: '28px', duration: 2000 }
   );
   
-  // Spawn 3 minions with a slight delay between each
-  for (let i = 0; i < 3; i++) {
+  // Spawn 4 minions with a slight delay between each (changed from 3)
+  for (let i = 0; i < 4; i++) {
     setTimeout(() => {
       // Position minions across the second rooftop with random offsets
-      const xPos = 35 + (i - 1) * 5;
+      const xPos = 35 + (i - 1.5) * 4; // Adjusted spacing for 4 minions
       const zPos = (Math.random() - 0.5) * 3;
       
       // Create gun-man minion and add to array (regardless of level)
@@ -73,7 +73,7 @@ export function spawnMinions(scene, currentRooftop, minions, currentLevel, hero,
       
       // Create spawn effect
       createMinionSpawnEffect(scene, xPos, 1.5, zPos, currentLevel);
-    }, i * 600); // Stagger spawn timing
+    }, i * 500); // Slightly faster spawn timing
   }
   
   // Update instructions
@@ -128,8 +128,8 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
   else if (currentLevel === 3) {
     // For Level 3, check which stage we're in
     if (hero.gameState && hero.gameState.currentStage === 1) {
-      // Stage 1: Gun minions - need to defeat 3
-      if (minionsFought + 1 === 3) {
+      // Stage 1: Gun minions - need to defeat 4 (changed from 3)
+      if (minionsFought + 1 === 4) {
         // Restore full health
         hero.health = 100;
         updateHealthBar(hero.health);
@@ -162,6 +162,39 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
     else if (hero.gameState && hero.gameState.currentStage === 2) {
       // Stage 2: Gun minions - need to defeat 3
       if (minionsFought + 1 === 3) {
+        // Restore full health
+        hero.health = 100;
+        updateHealthBar(hero.health);
+        
+        // Create health restoration effect
+        createNotification(
+          'HEALTH FULLY RESTORED!',
+          { color: '#00ff88', duration: 2000 }
+        );
+        
+        // Create healing visual effect around hero
+        trail.createHealingParticles(hero.position);
+        
+        // Create effects for new stairs appearing for Stage 3
+        createStairsAppearEffect(scene, 65, 4.5, 0);
+        
+        // Show notification about stairs
+        createNotification(
+          'NEW STAIRS APPEARED!<br><span style="font-size: 18px">Climb up to face rifle minions!</span>',
+          { color: '#ff5500', duration: 3000 }
+        );
+        
+        // Add instruction to climb stairs
+        instructions.innerHTML = 'Climb the new stairs to reach the final stage!';
+        
+        // Update game state for Stage 3
+        hero.hasDefeatedStage2 = true;
+        hero.gameState.currentStage = 3;
+      }
+    }
+    else if (hero.gameState && hero.gameState.currentStage === 3) {
+      // Stage 3: Rifle minions - need to defeat 2
+      if (minionsFought + 1 === 2) {
         // Restore full health
         hero.health = 100;
         updateHealthBar(hero.health);
@@ -333,7 +366,7 @@ function createDefaultProjectile(scene, minion, hero, attackDirection, hoverAmou
   // Create dark energy projectile (plane geometry)
   const projectileGeometry = new THREE.PlaneGeometry(0.2, 0.1); // Reduced height from 0.2 to 0.1
   const projectileMaterial = new THREE.MeshBasicMaterial({
-    color: 0xff3333, // Red projectile for minions
+    color: 0xff2222, // Red projectile for minions
     transparent: true,
     opacity: 0.9,
     side: THREE.DoubleSide
@@ -459,9 +492,9 @@ function createDefaultProjectile(scene, minion, hero, attackDirection, hoverAmou
 // Gun bullet projectile for Level 3 Stage 1 gun-man minions
 function createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar) {
   // Create bullet projectile (circular geometry for bullet)
-  const projectileGeometry = new THREE.CircleGeometry(0.1, 8); // Small circle for bullet
+  const projectileGeometry = new THREE.CircleGeometry(0.4, 0.2); // Small circle for bullet
   const projectileMaterial = new THREE.MeshBasicMaterial({
-    color: 0xffaa00, // Orange/gold for gun bullet
+    color: 0xff2222, // Orange/gold for gun bullet
     transparent: true,
     opacity: 0.9,
     side: THREE.DoubleSide
@@ -484,7 +517,7 @@ function createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAm
   const muzzleFlash = new THREE.Mesh(
     new THREE.CircleGeometry(0.3, 8),
     new THREE.MeshBasicMaterial({
-      color: 0xffdd44, // Bright yellow
+      color: 0xff2222, // Bright yellow
       transparent: true,
       opacity: 0.8
     })
@@ -585,7 +618,7 @@ function createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAm
 // Rifle bullet projectile for Level 3 Stage 2 rifle-man minions
 function createRifleBulletProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar) {
   // Create rifle bullet projectile (elongated rectangle for rifle bullet)
-  const projectileGeometry = new THREE.PlaneGeometry(0.25, 0.08); // Elongated bullet
+  const projectileGeometry = new THREE.PlaneGeometry(0.4, 0.2); // Elongated bullet
   const projectileMaterial = new THREE.MeshBasicMaterial({
     color: 0xff2222, // Bright red for rifle bullet
     transparent: true,
@@ -919,6 +952,59 @@ export function checkLevelThreeStageTransition(hero, scene, minions, currentLeve
         instructions.innerHTML = hero.hasSmokeAttack ? 
           'LEVEL 3 STAGE 2! Gun minions ahead! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade!' :
           'LEVEL 3 STAGE 2! Gun minions ahead! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade!';
+      }, 1000);
+    }
+  }
+  
+  // Check for transition to stage 3 with rifle minions
+  else if (currentLevel === 3 && !hero.hasDefeatedStage2 && 
+          hero.position.x >= 70 && hero.position.x <= 80 && 
+          hero.position.y >= 6.5) {
+    
+    // Check if this is the first time reaching the higher platform
+    if (hero.gameState && hero.gameState.currentStage === 3 && !hero.reachedStage3) {
+      // Mark that player has reached stage 3
+      hero.reachedStage3 = true;
+      
+      // Show stage 3 notification
+      createNotification(
+        'LEVEL 3 - FINAL STAGE<br><span style="font-size: 20px">Rifle minions spotted!</span>',
+        {
+          color: '#ff3333',
+          fontSize: '36px',
+          duration: 3000,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)'
+        }
+      );
+      
+      // Clear any remaining stage 2 minions
+      minions.forEach(m => {
+        if (m.group) {
+          scene.remove(m.group);
+        }
+      });
+      minions.length = 0;
+      
+      // Spawn rifle minions for Level 3 Stage 3
+      setTimeout(() => {
+        for (let i = 0; i < 2; i++) {
+          setTimeout(() => {
+            const xPos = 75 + (i - 0.5) * 5; // Position them ahead
+            const zPos = (Math.random() - 0.5) * 3;
+            
+            // Create rifle-man minions for the final stage
+            const newMinion = createMinion(scene, xPos, 7.5, zPos, 3, 'rifle-man');
+            minions.push(newMinion);
+            
+            // Add spawn effect
+            createMinionSpawnEffect(scene, xPos, 7.5, zPos, 3);
+          }, i * 800); // Longer stagger for dramatic effect
+        }
+        
+        // Update instructions
+        instructions.innerHTML = hero.hasSmokeAttack ? 
+          'FINAL STAGE! Rifle minions deal more damage! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade!' :
+          'FINAL STAGE! Rifle minions deal more damage! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade!';
       }, 1000);
     }
   }
