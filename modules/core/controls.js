@@ -9,6 +9,9 @@ export function setupControls(gameState, hero, introOverlay, speechBubble, instr
       document.getElementById('renderDiv').removeChild(introOverlay);
       instructions.innerHTML = 'Use ARROW KEYS or WASD to move and jump';
 
+      // Dispatch custom event for game phase change
+      document.dispatchEvent(new CustomEvent('gamePhaseChange', { detail: { phase: 'gameplay' } }));
+
       // Show villain speech bubble for 3 seconds.
       speechBubble.style.opacity = '1';
       speechBubble.style.left = '60%';

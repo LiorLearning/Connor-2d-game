@@ -10,8 +10,9 @@ import { initTrail } from './modules/effects/trail.js';
 import { createJumpBoostIndicator } from './modules/environment/jumpBoost.js';
 import { createBoltCollectible } from './modules/collectibles/bolt.js';
 import { showMathQuiz } from './modules/ui/mathQuiz.js';
-import { createMinion } from './modules/entities/minion.js';
+import { createMinion, createMinionSpawnEffect } from './modules/entities/minion.js';
 import { animationLoop } from './modules/core/animationLoop.js';
+import { createNotification } from './modules/ui/interface.js';
 // import { setupAudio } from './modules/core/audio.js';
 
 function initGame() {
@@ -28,6 +29,10 @@ function initGame() {
   
   // Initialize game entities
   const hero = initHero(scene);
+  // Add gameState to hero
+  hero.gameState = {
+    currentStage: 3
+  };
   const villain = initVillain(scene);
   
   // Initialize UI elements
@@ -46,7 +51,7 @@ function initGame() {
     minionsFought: 0,
     totalMinions: 20,
     minionsSpawned: false,
-    currentLevel: 1
+    currentLevel: 3
   };
   
   // Create collectibles
@@ -82,6 +87,49 @@ function initGame() {
     instructions,
     levelIndicator
   );
+  
+  // Initialize Level 3 minions when game phase changes to gameplay
+  const initLevel3 = () => {
+    if (gameState.gamePhase === "gameplay") {
+      // Show level 3 notification
+      createNotification(
+        'LEVEL 3<br><span style="font-size: 20px">Stage 1: Defeat the gun minions!</span>',
+        {
+          color: '#ff3333',
+          fontSize: '36px',
+          duration: 3000,
+          backgroundColor: 'rgba(0, 0, 0, 0.7)'
+        }
+      );
+      
+      // Spawn gun minions for Level 3 Stage 1
+      setTimeout(() => {
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const xPos = 35 + (i - 1) * 5; // Spread them out
+            const zPos = (Math.random() - 0.5) * 3;
+            // Create Level 3 minions with gun-man texture
+            const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man');
+            minions.push(newMinion);
+            
+            // Add spawn effect
+            createMinionSpawnEffect(scene, xPos, 1.5, zPos, 3);
+          }, i * 600); // Stagger spawns
+        }
+        
+        // Update instructions for level 3
+        instructions.innerHTML = hero.hasSmokeAttack ? 
+          'LEVEL 3 MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
+          'LEVEL 3 MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
+      }, 1000);
+      
+      // Remove the event listener after initialization
+      document.removeEventListener('gamePhaseChange', initLevel3);
+    }
+  };
+  
+  // Add event listener for game phase change
+  document.addEventListener('gamePhaseChange', initLevel3);
   
   // Handle window resize
   let resizeTimeout;

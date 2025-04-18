@@ -11,7 +11,7 @@ const textureOptions = {
 };
 
 // Load and cache all textures
-let ninjaTexture, villainTexture, smokeBombTexture, minionTexture, boltTexture;
+let ninjaTexture, villainTexture, smokeBombTexture, minionTexture, boltTexture, gunManTexture, rifleManTexture;
 
 export function loadTextures() {
   // Load all textures if not already loaded
@@ -46,6 +46,20 @@ export function loadTextures() {
     );
   }
   
+  if (!gunManTexture) {
+    gunManTexture = textureLoader.load(
+      './assets/gun-man.png',
+      undefined, undefined, undefined, textureOptions
+    );
+  }
+  
+  if (!rifleManTexture) {
+    rifleManTexture = textureLoader.load(
+      './assets/rifle-man.png',
+      undefined, undefined, undefined, textureOptions
+    );
+  }
+  
   if (!minionTexture && villainTexture) {
     // Reuse villain texture for minions
     minionTexture = villainTexture.clone();
@@ -56,6 +70,8 @@ export function loadTextures() {
     villainTexture,
     smokeBombTexture,
     minionTexture,
-    boltTexture
+    boltTexture,
+    gunManTexture,
+    rifleManTexture
   };
 }

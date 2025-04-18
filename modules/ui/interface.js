@@ -140,15 +140,15 @@ function createLevelIndicator() {
     right: '20px',
     fontFamily: "'Orbitron', sans-serif",
     fontSize: '24px',
-    color: '#00ffff', // Initial color for Level 1
-    textShadow: '0 0 10px rgba(0, 255, 255, 0.8)',
+    color: '#ff3333', // Color for Level 3 (red)
+    textShadow: '0 0 10px rgba(255, 51, 51, 0.8)',
     zIndex: '100',
     padding: '5px 10px',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: '5px',
-    border: '1px solid #00ffff'
+    border: '1px solid #ff3333'
   });
-  levelIndicator.textContent = 'LEVEL 1';
+  levelIndicator.textContent = 'LEVEL 3';
   document.getElementById('renderDiv').appendChild(levelIndicator);
   
   return levelIndicator;

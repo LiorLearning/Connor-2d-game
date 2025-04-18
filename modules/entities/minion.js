@@ -1,9 +1,22 @@
 import * as THREE from 'three';
 import { loadTextures } from '../utils/textureLoader.js';
 
-export function createMinion(scene, x, y, z, level = 1) {
-  // Load textures
-  const { minionTexture } = loadTextures();
+export function createMinion(scene, x, y, z, level = 1, type = '') {
+  // Load textures based on minion type
+  let minionTexture;
+  
+  // Load the appropriate texture based on type parameter
+  const textures = loadTextures();
+  if (type === 'gun-man') {
+    // Use gun-man texture for Level 3 Stage 1
+    minionTexture = textures.gunManTexture;
+  } else if (type === 'rifle-man') {
+    // Use rifle-man texture for Level 3 Stage 2
+    minionTexture = textures.rifleManTexture;
+  } else {
+    // Use default texture for Level 1 and 2
+    minionTexture = textures.minionTexture;
+  }
   
   const minion = {
     position: { x, y, z },
@@ -13,17 +26,29 @@ export function createMinion(scene, x, y, z, level = 1) {
     lastHit: 0,
     hitCooldown: 500, // milliseconds between hits
     level: level, // Store the level
-    canShoot: level >= 2, // Level 2+ minions can shoot
-    projectileCooldown: 9000, // 9 seconds between shots for Level 2+ (increased from 3000)
-    lastProjectile: 0 // Track last shot time for Level 2+
+    canShoot: level >= 2 || type === 'gun-man' || type === 'rifle-man', // Level 2+ and Level 3 minions can shoot
+    projectileCooldown: type === 'rifle-man' ? 7000 : 9000, // Rifle minions shoot faster
+    lastProjectile: 0, // Track last shot time
+    damage: type === 'rifle-man' ? 20 : 15, // Rifle minions deal more damage
+    type: type // Store the minion type
   };
   
-  // Create minion sprite with purple tint to distinguish from main villain
+  // Create minion sprite with color tint based on type
+  let spriteColor;
+  
+  if (type === 'gun-man') {
+    spriteColor = 0xffbb88; // Orange tint for gun-man
+  } else if (type === 'rifle-man') {
+    spriteColor = 0xff5555; // Red tint for rifle-man
+  } else {
+    spriteColor = 0xbbbbff; // Default purple tint for lower level minions
+  }
+  
   const minionMaterial = new THREE.SpriteMaterial({
     map: minionTexture,
     transparent: true,
     alphaTest: 0.1,
-    color: 0xbbbbff // Slightly different color than main villain
+    color: spriteColor
   });
   
   const minionSprite = new THREE.Sprite(minionMaterial);
@@ -31,11 +56,21 @@ export function createMinion(scene, x, y, z, level = 1) {
   minionSprite.scale.x = -Math.abs(minionSprite.scale.x); // Face left initially
   minion.group.add(minionSprite);
   
-  // Add purple glow
+  // Add glow with color based on type
+  let glowColor;
+  
+  if (type === 'gun-man') {
+    glowColor = 0xff8800; // Orange glow for gun-man
+  } else if (type === 'rifle-man') {
+    glowColor = 0xff3333; // Red glow for rifle-man
+  } else {
+    glowColor = 0x8833ff; // Default purple glow
+  }
+  
   const minionGlowMaterial = new THREE.SpriteMaterial({
     map: minionTexture,
     transparent: true,
-    color: 0x8833ff, // Purple glow to distinguish from red villain glow
+    color: glowColor,
     opacity: 0.3
   });
   
@@ -60,10 +95,10 @@ export function createMinion(scene, x, y, z, level = 1) {
   healthBarBackground.position.set(0, 2.0, 0);
   minion.group.add(healthBarBackground);
   
-  // Health bar fill (purple)
+  // Health bar fill (color based on type)
   const healthBarFill = new THREE.Mesh(
     new THREE.PlaneGeometry(healthBarWidth - 0.05, healthBarHeight - 0.05),
-    new THREE.MeshBasicMaterial({ color: 0x8833ff })
+    new THREE.MeshBasicMaterial({ color: glowColor })
   );
   healthBarFill.position.set(0, 2.0, 0.01);
   minion.healthBar = healthBarFill;

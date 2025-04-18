@@ -9,7 +9,7 @@ import { createBoltCounter, updateBoltCounter, spawnBoltOnFirstRooftop, createBo
 
 // Import new modular components
 import { updateSpriteOrientation, handleHeroFalling, handleHeroInvulnerability } from '../entities/heroUpdates.js';
-import { updateMinions, updateMinionHealthBar, spawnMinions } from '../entities/minionUpdates.js';
+import { updateMinions, updateMinionHealthBar, spawnMinions, checkLevelThreeStageTransition } from '../entities/minionUpdates.js';
 import { handleEnemyIndicators, processHeroAttack } from '../ui/combatUI.js';
 import { advanceToNextLevel, handleJumpPrompt } from '../gameplay/levelManager.js';
 import { createSmokeExplosion } from '../effects/smokeEffects.js';
@@ -294,6 +294,42 @@ export function animationLoop(
     // Add directional indicator for the next rooftop if the hero is near the edge
     handleJumpPrompt(hero, currentRooftop, minions, boltCollectible);
 
+    // After the part where we check if hero is on any rooftop, add code to check for stairs in Level 3
+
+    if (onAnyRooftop && currentRooftop) {
+      // Check if we were falling and now landed on a rooftop
+      if (!hero.grounded) {
+        hero.grounded = true;
+        hero.velocity.y = 0;
+        // Ensure hero is exactly at the rooftop level
+        hero.position.y = currentRooftop.position.y + (currentRooftop.geometry.parameters.height / 2) + 1;
+      }
+      
+      // Add handling for Level 3 stairs platform
+      if (gameState.currentLevel === 3 && hero.hasDefeatedStage1 && 
+          hero.position.x >= 50 && hero.position.x <= 60 && 
+          hero.position.y >= 3.5) {
+        
+        // Check if this is the first time reaching the platform
+        if (hero.gameState && hero.gameState.currentStage === 1) {
+          // Advance to stage 2 of Level 3
+          advanceToNextLevel(gameState.currentLevel, levelIndicator, hero, minions, scene, createMinion, instructions);
+        }
+      }
+    } 
+    else if (hero.velocity.y < 0) {
+      // Not on any rooftop and moving downward
+      hero.grounded = false;
+    }
+
+    // After all the updates and before rendering
+    
+    // Check if the player has reached the next stage in Level 3
+    if (gameState.gamePhase === "gameplay") {
+      checkLevelThreeStageTransition(hero, scene, minions, gameState.currentLevel, levelIndicator, createMinion, instructions);
+    }
+    
+    // Render scene
     renderer.render(scene, camera);
   }
 
