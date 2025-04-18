@@ -18,7 +18,7 @@ export function initHero(scene) {
     invulnerableTime: 1000, // 1 second of invulnerability after being hit
     isInvulnerable: false,
     isDodging: false,
-    dodgeSpeed: 0.6, // Increased from 0.4
+    dodgeSpeed: 0.8, // Increased from 0.4
     dodgeDirection: 0,
     dodgeStartTime: 0,
     dodgeDuration: 250, // Decreased from 300 milliseconds for faster dodge

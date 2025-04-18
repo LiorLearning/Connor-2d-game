@@ -122,9 +122,9 @@ export function animationLoop(
         } else {
           // Normal movement when not dodging
           if (keys.left) {
-            hero.velocity.x = -0.3; // Increased from -0.1
+            hero.velocity.x = -0.5; // Increased from -0.1
           } else if (keys.right) {
-            hero.velocity.x = 0.3; // Increased from 0.1
+            hero.velocity.x = 0.5; // Increased from 0.1
           } else {
             hero.velocity.x *= 0.85; // Changed from 0.9 for smoother deceleration
           }
