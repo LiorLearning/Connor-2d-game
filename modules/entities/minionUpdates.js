@@ -94,11 +94,19 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
   // Hide minion
   minion.group.visible = false;
   
-  // Show defeat notification for gun minions
-  const defeatMessage = `GUN MINION DEFEATED!<br><span style="font-size: 18px">${minionsFought + 1} of 3</span>`;
+  // Show defeat notification based on minion type
+  let defeatMessage, defeatColor;
   
-  // Choose color for gun-man
-  let defeatColor = '#ffaa00';
+  if (minion.type === 'gun-man') {
+    defeatMessage = `GUN MINION DEFEATED!`;
+    defeatColor = '#ffaa00';
+  } else if (minion.type === 'rifle-man') {
+    defeatMessage = `RIFLE MINION DEFEATED!`;
+    defeatColor = '#ff5555';
+  } else {
+    defeatMessage = `MINION DEFEATED!`;
+    defeatColor = '#bb88ff';
+  }
   
   createNotification(
     defeatMessage,
@@ -127,91 +135,41 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
     }
   } 
   else if (currentLevel === 3) {
-    // For Level 3, check which stage we're in
-    if (hero.gameState && hero.gameState.currentStage === 1) {
-      // Stage 1: Gun minions - need to defeat 4 (changed from 3)
-      if (minionsFought + 1 === 4) {
-        // Restore full health
-        hero.health = 100;
-        updateHealthBar(hero.health);
-        
-        // Create health restoration effect
-        createNotification(
-          'HEALTH FULLY RESTORED!',
-          { color: '#00ff88', duration: 2000 }
-        );
-        
-        // Create healing visual effect around hero
-        trail.createHealingParticles(hero.position);
-        
-        // Create effects for stairs appearing
-        createStairsAppearEffect(scene, 45, 1.5, 0);
-        
-        // Show notification about stairs
-        createNotification(
-          'STAIRS APPEARED!<br><span style="font-size: 18px">Climb up to face more gun minions!</span>',
-          { color: '#00ffff', duration: 3000 }
-        );
-        
-        // Add instruction to climb stairs
-        instructions.innerHTML = 'Climb the stairs to reach the next stage!';
-        
-        // Create gameState property for tracking progression
-        hero.hasDefeatedStage1 = true;
-      }
-    } 
-    else if (hero.gameState && hero.gameState.currentStage === 2) {
-      // Stage 2: Gun minions - need to defeat 3
-      if (minionsFought + 1 === 3) {
-        // Restore full health
-        hero.health = 100;
-        updateHealthBar(hero.health);
-        
-        // Create health restoration effect
-        createNotification(
-          'HEALTH FULLY RESTORED!',
-          { color: '#00ff88', duration: 2000 }
-        );
-        
-        // Create healing visual effect around hero
-        trail.createHealingParticles(hero.position);
-        
-        // Create effects for new stairs appearing for Stage 3
-        createStairsAppearEffect(scene, 65, 4.5, 0);
-        
-        // Show notification about stairs
-        createNotification(
-          'NEW STAIRS APPEARED!<br><span style="font-size: 18px">Climb up to face rifle minions!</span>',
-          { color: '#ff5500', duration: 3000 }
-        );
-        
-        // Add instruction to climb stairs
-        instructions.innerHTML = 'Climb the new stairs to reach the final stage!';
-        
-        // Update game state for Stage 3
-        hero.hasDefeatedStage2 = true;
-        hero.gameState.currentStage = 3;
+    // Count remaining active minions
+    let remainingMinions = 0;
+    for (let i = 0; i < minions.length; i++) {
+      if (minions[i].active) {
+        remainingMinions++;
       }
     }
-    else if (hero.gameState && hero.gameState.currentStage === 3) {
-      // Stage 3: Rifle minions - need to defeat 2
-      if (minionsFought + 1 === 2) {
-        // Restore full health
-        hero.health = 100;
-        updateHealthBar(hero.health);
-        
-        // Create health restoration effect
+    
+    // If no minions left, advance to next level or complete the game
+    if (remainingMinions === 0) {
+      // Restore full health
+      hero.health = 100;
+      updateHealthBar(hero.health);
+      
+      // Create health restoration effect
+      createNotification(
+        'ALL MINIONS DEFEATED! HEALTH FULLY RESTORED!',
+        { color: '#00ff88', duration: 3000 }
+      );
+      
+      // Create healing visual effect around hero
+      trail.createHealingParticles(hero.position);
+      
+      // Final level completion notification
+      setTimeout(() => {
         createNotification(
-          'HEALTH FULLY RESTORED!',
-          { color: '#00ff88', duration: 2000 }
+          'LEVEL 3 COMPLETE!<br><span style="font-size: 20px">Congratulations!</span>',
+          {
+            color: '#ffdd00',
+            fontSize: '36px',
+            duration: 5000,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)'
+          }
         );
-        
-        // Create healing visual effect around hero
-        trail.createHealingParticles(hero.position);
-        
-        // Progress to completion
-        advanceToNextLevel(currentLevel, levelIndicator, hero, minions, scene, createMinion, instructions);
-      }
+      }, 3000);
     }
   }
 }
@@ -330,6 +288,12 @@ function createStairs(scene, x, y, z) {
     z
   );
   scene.add(platformEdge);
+}
+
+// Export the createStairs function for direct use in main.js
+export function createStairsForGame(scene, x, y, z) {
+  // Create the actual stairs without animation effect
+  createStairs(scene, x, y, z);
 }
 
 function processMinionRangedAttack(minion, hero, scene, triggerScreenShake, updateHealthBar) {
@@ -982,111 +946,9 @@ function createMinionMeleeProjectile(scene, minion, hero, attackDirection) {
 
 // Add a new function to check if the player has reached the top of the stairs
 export function checkLevelThreeStageTransition(hero, scene, minions, currentLevel, levelIndicator, createMinion, instructions) {
-  // Only run this logic if we're in Level 3 and the hero has defeated stage 1
-  if (currentLevel === 3 && hero.hasDefeatedStage1 && 
-      hero.position.x >= 50 && hero.position.x <= 60 && 
-      hero.position.y >= 3.5) {
-    
-    // Check if this is the first time reaching the platform
-    if (hero.gameState && hero.gameState.currentStage === 1) {
-      // Mark stage transition
-      hero.gameState.currentStage = 2;
-      
-      // Show stage 2 notification
-      createNotification(
-        'LEVEL 3 - STAGE 2<br><span style="font-size: 20px">More gun minions ahead!</span>',
-        {
-          color: '#ff5555',
-          fontSize: '36px',
-          duration: 3000,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)'
-        }
-      );
-      
-      // Clear any remaining stage 1 minions
-      minions.forEach(m => {
-        if (m.group) {
-          scene.remove(m.group);
-        }
-      });
-      minions.length = 0;
-      
-      // Spawn gun minions for Level 3 Stage 2
-      setTimeout(() => {
-        for (let i = 0; i < 3; i++) {
-          setTimeout(() => {
-            const xPos = 55 + (i - 1) * 5; // Position them ahead
-            const zPos = (Math.random() - 0.5) * 3;
-            
-            // Create gun-man minions for stage 2
-            const newMinion = createMinion(scene, xPos, 4.5, zPos, 3, 'gun-man');
-            minions.push(newMinion);
-            
-            // Add spawn effect
-            createMinionSpawnEffect(scene, xPos, 4.5, zPos, 3);
-          }, i * 600); // Stagger spawns
-        }
-        
-        // Update instructions
-        instructions.innerHTML = hero.hasSmokeAttack ? 
-          'LEVEL 3 STAGE 2! Gun minions ahead! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade!' :
-          'LEVEL 3 STAGE 2! Gun minions ahead! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade!';
-      }, 1000);
-    }
-  }
-  
-  // Check for transition to stage 3 with rifle minions
-  else if (currentLevel === 3 && !hero.hasDefeatedStage2 && 
-          hero.position.x >= 70 && hero.position.x <= 80 && 
-          hero.position.y >= 6.5) {
-    
-    // Check if this is the first time reaching the higher platform
-    if (hero.gameState && hero.gameState.currentStage === 3 && !hero.reachedStage3) {
-      // Mark that player has reached stage 3
-      hero.reachedStage3 = true;
-      
-      // Show stage 3 notification
-      createNotification(
-        'LEVEL 3 - FINAL STAGE<br><span style="font-size: 20px">Rifle minions spotted!</span>',
-        {
-          color: '#ff3333',
-          fontSize: '36px',
-          duration: 3000,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)'
-        }
-      );
-      
-      // Clear any remaining stage 2 minions
-      minions.forEach(m => {
-        if (m.group) {
-          scene.remove(m.group);
-        }
-      });
-      minions.length = 0;
-      
-      // Spawn rifle minions for Level 3 Stage 3
-      setTimeout(() => {
-        for (let i = 0; i < 2; i++) {
-          setTimeout(() => {
-            const xPos = 75 + (i - 0.5) * 5; // Position them ahead
-            const zPos = (Math.random() - 0.5) * 3;
-            
-            // Create rifle-man minions for the final stage
-            const newMinion = createMinion(scene, xPos, 7.5, zPos, 3, 'rifle-man');
-            minions.push(newMinion);
-            
-            // Add spawn effect
-            createMinionSpawnEffect(scene, xPos, 7.5, zPos, 3);
-          }, i * 800); // Longer stagger for dramatic effect
-        }
-        
-        // Update instructions
-        instructions.innerHTML = hero.hasSmokeAttack ? 
-          'FINAL STAGE! Rifle minions deal more damage! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade!' :
-          'FINAL STAGE! Rifle minions deal more damage! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade!';
-      }, 1000);
-    }
-  }
+  // This function is now empty since we're spawning all minions at once
+  // and don't need stage transitions
+  return;
 }
 
 // Function to show a math quiz for shield restoration

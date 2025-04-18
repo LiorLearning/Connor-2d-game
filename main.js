@@ -96,7 +96,7 @@ function initGame() {
     if (gameState.gamePhase === "gameplay") {
       // Show level 3 notification
       createNotification(
-        'LEVEL 3<br><span style="font-size: 20px">Stage 1: Defeat the gun minions!</span>',
+        'LEVEL 3<br><span style="font-size: 20px">Defeat all minions!</span>',
         {
           color: '#ff3333',
           fontSize: '36px',
@@ -105,25 +105,63 @@ function initGame() {
         }
       );
       
-      // Spawn gun minions for Level 3 Stage 1
+      // Create the stairs immediately
+      import('./modules/entities/minionUpdates.js').then(module => {
+        // Create stairs to the first platform
+        module.createStairsForGame(scene, 45, 1.5, 0);
+        
+        // Create stairs to the higher platform for rifle men
+        module.createStairsForGame(scene, 65, 4.5, 0);
+      });
+      
+      // Spawn gun minions for Level 3
       setTimeout(() => {
-        for (let i = 0; i < 3; i++) {
+        // Gun minions on the first level
+        for (let i = 0; i < 4; i++) {
           setTimeout(() => {
-            const xPos = 35 + (i - 1) * 5; // Spread them out
+            const xPos = 35 + (i - 1.5) * 4; // Spread them out
             const zPos = (Math.random() - 0.5) * 3;
-            // Create Level 3 minions with gun-man texture
+            // Create gun minions
             const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man');
             minions.push(newMinion);
             
             // Add spawn effect
             createMinionSpawnEffect(scene, xPos, 1.5, zPos, 3);
-          }, i * 600); // Stagger spawns
+          }, i * 300); // Faster spawn timing
         }
         
-        // Update instructions for level 3
+        // Gun minions on the middle platform
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const xPos = 55 + (i - 1) * 4; 
+            const zPos = (Math.random() - 0.5) * 3;
+            // Create gun minions
+            const newMinion = createMinion(scene, xPos, 4.5, zPos, 3, 'gun-man');
+            minions.push(newMinion);
+            
+            // Add spawn effect
+            createMinionSpawnEffect(scene, xPos, 4.5, zPos, 3);
+          }, i * 300 + 1200); // Spawn after first group
+        }
+        
+        // Rifle minions on the highest platform
+        for (let i = 0; i < 1; i++) {
+          setTimeout(() => {
+            const xPos = 75 + (i - 1) * 4;
+            const zPos = (Math.random() - 0.5) * 3;
+            // Create rifle minions
+            const newMinion = createMinion(scene, xPos, 7.5, zPos, 3, 'rifle-man');
+            minions.push(newMinion);
+            
+            // Add spawn effect
+            createMinionSpawnEffect(scene, xPos, 7.5, zPos, 3);
+          }, i * 300 + 2400); // Spawn after second group
+        }
+        
+        // Update instructions
         instructions.innerHTML = hero.hasSmokeAttack ? 
-          'LEVEL 3 GUN MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
-          'LEVEL 3 GUN MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
+          'LEVEL 3 MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
+          'LEVEL 3 MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
       }, 1000);
       
       // Remove the event listener after initialization

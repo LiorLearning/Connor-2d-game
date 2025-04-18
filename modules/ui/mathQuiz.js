@@ -345,7 +345,7 @@ export function showMathQuiz(hero, gameState) {
         }
       } else if (gameState === true) {
         // Handle case where gameState is a boolean value
-        console.log("gameState is a boolean, cannot set movementLocked property");
+        // console.log("gameState is a boolean, cannot set movementLocked property");
       }
       
       // Set hero's bolt properties (only for regular quizzes)

@@ -278,6 +278,14 @@ export function animationLoop(
 
     // Update camera and skyline parallax.
     camera.position.x = hero.position.x;
+    
+    // Elevate camera when on stairs in Level 3
+    if (gameState.currentLevel === 3 && hero.position.x >= 50 && hero.position.x <= 60 && hero.position.y >= 3.5) {
+      camera.position.y = 8; // Raise camera to see rifle men on the elevated platform
+    } else {
+      camera.position.y = 4; // Default camera height
+    }
+    
     skyline.position.x = hero.position.x * 0.4;
     
     // Check if hero has reached the second rooftop and spawn minions if needed
