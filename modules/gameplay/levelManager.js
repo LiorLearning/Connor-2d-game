@@ -32,7 +32,7 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
     
     // Spawn new minions for Level 2 after a delay
     setTimeout(() => {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 1; i++) {
         setTimeout(() => {
           const xPos = 35 + (i - 1) * 5; // Spread them out
           const zPos = (Math.random() - 0.5) * 3;
@@ -82,7 +82,7 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
     
     // Spawn new gun minions for Level 3 Stage 1 after a delay
     setTimeout(() => {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 1; i++) {
         setTimeout(() => {
           const xPos = 35 + (i - 1) * 5; // Spread them out
           const zPos = (Math.random() - 0.5) * 3;
@@ -127,7 +127,7 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
     
     // Spawn gun minions for Level 3 Stage 2 after a delay
     setTimeout(() => {
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 1; i++) {
         setTimeout(() => {
           const xPos = 50 + (i - 1) * 5; // Position them further ahead
           const zPos = (Math.random() - 0.5) * 3;

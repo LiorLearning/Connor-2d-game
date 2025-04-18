@@ -42,7 +42,7 @@ export function animationLoop(
     requestAnimationFrame(animate);
     
     // Calculate delta time for consistent animation speed regardless of frame rate
-    const deltaTime = clock.getDelta();
+    // const deltaTime = clock.getDelta();
     const elapsed = currentTime - lastTime;
     lastTime = currentTime;
     
@@ -280,10 +280,14 @@ export function animationLoop(
     camera.position.x = hero.position.x;
     
     // Elevate camera when on stairs in Level 3
-    if (gameState.currentLevel === 3 && hero.position.x >= 50 && hero.position.x <= 60 && hero.position.y >= 3.5) {
-      camera.position.y = 8; // Raise camera to see rifle men on the elevated platform
+    if (gameState.currentLevel === 3) {
+      if (hero.position.x >= 40 && hero.position.y >= 2) {
+        camera.position.y = 8; // Raise camera to see rifle men on the elevated platform
+      } else {
+        camera.position.y = 4; // Default camera height
+      }
     } else {
-      camera.position.y = 4; // Default camera height
+      // camera.position.y = 4; // Default camera height
     }
     
     skyline.position.x = hero.position.x * 0.4;

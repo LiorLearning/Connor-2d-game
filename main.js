@@ -107,17 +107,14 @@ function initGame() {
       
       // Create the stairs immediately
       import('./modules/entities/minionUpdates.js').then(module => {
-        // Create stairs to the first platform
+        // Create stairs to the middle platform only
         module.createStairsForGame(scene, 45, 1.5, 0);
-        
-        // Create stairs to the higher platform for rifle men
-        module.createStairsForGame(scene, 65, 4.5, 0);
       });
       
-      // Spawn gun minions for Level 3
+      // Spawn minions for Level 3
       setTimeout(() => {
         // Gun minions on the first level
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 1; i++) {
           setTimeout(() => {
             const xPos = 35 + (i - 1.5) * 4; // Spread them out
             const zPos = (Math.random() - 0.5) * 3;
@@ -130,32 +127,18 @@ function initGame() {
           }, i * 300); // Faster spawn timing
         }
         
-        // Gun minions on the middle platform
-        for (let i = 0; i < 3; i++) {
+        // Rifle minions on the middle platform
+        for (let i = 0; i < 2; i++) {
           setTimeout(() => {
-            const xPos = 55 + (i - 1) * 4; 
+            const xPos = 60 + (i - 1) * 2; 
             const zPos = (Math.random() - 0.5) * 3;
-            // Create gun minions
-            const newMinion = createMinion(scene, xPos, 4.5, zPos, 3, 'gun-man');
+            // Create rifle minions
+            const newMinion = createMinion(scene, xPos, 4.5, zPos, 3, 'rifle-man');
             minions.push(newMinion);
             
             // Add spawn effect
             createMinionSpawnEffect(scene, xPos, 4.5, zPos, 3);
           }, i * 300 + 1200); // Spawn after first group
-        }
-        
-        // Rifle minions on the highest platform
-        for (let i = 0; i < 1; i++) {
-          setTimeout(() => {
-            const xPos = 75 + (i - 1) * 4;
-            const zPos = (Math.random() - 0.5) * 3;
-            // Create rifle minions
-            const newMinion = createMinion(scene, xPos, 7.5, zPos, 3, 'rifle-man');
-            minions.push(newMinion);
-            
-            // Add spawn effect
-            createMinionSpawnEffect(scene, xPos, 7.5, zPos, 3);
-          }, i * 300 + 2400); // Spawn after second group
         }
         
         // Update instructions

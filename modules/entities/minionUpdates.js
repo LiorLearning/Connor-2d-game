@@ -299,7 +299,14 @@ export function createStairsForGame(scene, x, y, z) {
 function processMinionRangedAttack(minion, hero, scene, triggerScreenShake, updateHealthBar) {
   if (minion.canShoot) { // Check if minion can shoot based on level
     const now = Date.now();
-    const rangedAttackDistance = 5; // Range for shooting - reduced from 15 to 5 for closer range
+    // Define different ranges based on minion type
+    let rangedAttackDistance = 5; // Default range for regular minions
+    
+    // Increase range for rifle-man minions
+    if (minion.type === 'rifle-man') {
+      rangedAttackDistance = 12; // Significantly increased range for rifle-man (was 5)
+    }
+    
     const distanceToHero = Math.abs(hero.position.x - minion.group.position.x);
     
     // Calculate hover amount here for use in projectile positioning
@@ -767,7 +774,7 @@ function createRifleBulletProjectile(scene, minion, hero, attackDirection, hover
     // Check if projectile is off-screen
     const distanceTraveled = Math.abs(projectile.position.x - startX);
     
-    if (distanceTraveled > 35) { // Rifle bullets travel farther
+    if (distanceTraveled > 50) { // Rifle bullets travel much farther (was 35)
       // Remove projectile and trail when they travel too far
       scene.remove(projectile);
       scene.remove(smokeTrail);
