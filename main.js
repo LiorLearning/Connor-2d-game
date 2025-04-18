@@ -12,14 +12,14 @@ import { createSmokeBombCollectible } from './modules/collectibles/smokeBomb.js'
 import { showMathQuiz } from './modules/ui/mathQuiz.js';
 import { createMinion } from './modules/entities/minion.js';
 import { animationLoop } from './modules/core/animationLoop.js';
-import { setupAudio } from './modules/core/audio.js';
+// import { setupAudio } from './modules/core/audio.js';
 
 function initGame() {
   // Initialize scene, camera, renderer, and lights
   const scene = initScene();
   
   // Initialize audio
-  const backgroundMusic = setupAudio();
+  // const backgroundMusic = setupAudio();
   
   // Create environment elements
   const rooftops = createRooftops(scene);
