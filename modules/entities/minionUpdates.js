@@ -62,10 +62,10 @@ export function spawnMinions(scene, currentRooftop, minions, currentLevel, hero,
   );
   
   // Spawn 4 minions with a slight delay between each (changed from 3)
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     setTimeout(() => {
       // Position minions across the second rooftop with random offsets
-      const xPos = 35 + (i - 1.5) * 4; // Adjusted spacing for 4 minions
+      const xPos = 40 + (i - 1.5) * 2; // Adjusted spacing for 4 minions
       const zPos = (Math.random() - 0.5) * 3;
       
       // Create gun-man minion and add to array (regardless of level)

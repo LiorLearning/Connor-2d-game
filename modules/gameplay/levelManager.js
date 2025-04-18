@@ -31,25 +31,25 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
     minionsFought = 0; // Reset counter AFTER clearing
     
     // Spawn new minions for Level 2 after a delay
-    setTimeout(() => {
-      for (let i = 0; i < 1; i++) {
-        setTimeout(() => {
-          const xPos = 35 + (i - 1) * 5; // Spread them out
-          const zPos = (Math.random() - 0.5) * 3;
-          // Create gun-men minions for all levels
-          const newMinion = createMinion(scene, xPos, 1.5, zPos, 2, 'gun-man');
-          minions.push(newMinion);
+    // setTimeout(() => {
+    //   for (let i = 0; i < 1; i++) {
+    //     setTimeout(() => {
+    //       const xPos = 35 + (i - 1) * 5; // Spread them out
+    //       const zPos = (Math.random() - 0.5) * 3;
+    //       // Create gun-men minions for all levels
+    //       const newMinion = createMinion(scene, xPos, 1.5, zPos, 2, 'gun-man');
+    //       minions.push(newMinion);
           
-          // Add spawn effect
-          createMinionSpawnEffect(scene, xPos, 1.5, zPos, 2);
-        }, i * 600); // Stagger spawns
-      }
+    //       // Add spawn effect
+    //       createMinionSpawnEffect(scene, xPos, 1.5, zPos, 2);
+    //     }, i * 600); // Stagger spawns
+    //   }
       
-      // Update instructions for level 2
-      instructions.innerHTML = hero.hasSmokeAttack ? 
-        'LEVEL 2 GUN MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
-        'LEVEL 2 GUN MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
-    }, 1000); // Delay before level 2 starts
+    //   // Update instructions for level 2
+    //   instructions.innerHTML = hero.hasSmokeAttack ? 
+    //     'LEVEL 2 GUN MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
+    //     'LEVEL 2 GUN MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
+    // }, 1000); // Delay before level 2 starts
   }
   else if (currentLevel === 2) {
     // Advance to Level 3
@@ -81,25 +81,25 @@ export function advanceToNextLevel(currentLevel, levelIndicator, hero, minions, 
     hero.gameState = { ...hero.gameState, currentStage: 1 };
     
     // Spawn new gun minions for Level 3 Stage 1 after a delay
-    setTimeout(() => {
-      for (let i = 0; i < 1; i++) {
-        setTimeout(() => {
-          const xPos = 35 + (i - 1) * 5; // Spread them out
-          const zPos = (Math.random() - 0.5) * 3;
-          // Create Level 3 minions with gun-man texture
-          const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man');
-          minions.push(newMinion);
+    // setTimeout(() => {
+    //   for (let i = 0; i < 1; i++) {
+    //     setTimeout(() => {
+    //       const xPos = 35 + (i - 1) * 5; // Spread them out
+    //       const zPos = (Math.random() - 0.5) * 3;
+    //       // Create Level 3 minions with gun-man texture
+    //       const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man');
+    //       minions.push(newMinion);
           
-          // Add spawn effect
-          createMinionSpawnEffect(scene, xPos, 1.5, zPos, 3);
-        }, i * 600); // Stagger spawns
-      }
+    //       // Add spawn effect
+    //       createMinionSpawnEffect(scene, xPos, 1.5, zPos, 3);
+    //     }, i * 600); // Stagger spawns
+    //   }
       
-      // Update instructions for level 3
-      instructions.innerHTML = hero.hasSmokeAttack ? 
-        'LEVEL 3 GUN MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
-        'LEVEL 3 GUN MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
-    }, 1000); // Delay before level 3 starts
+    //   // Update instructions for level 3
+    //   instructions.innerHTML = hero.hasSmokeAttack ? 
+    //     'LEVEL 3 GUN MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
+    //     'LEVEL 3 GUN MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
+    // }, 1000); // Delay before level 3 starts
   }
   else if (currentLevel === 3 && hero.gameState && hero.gameState.currentStage === 1) {
     // Advance to Level 3 Stage 2

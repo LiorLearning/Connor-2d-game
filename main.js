@@ -114,18 +114,18 @@ function initGame() {
       // Spawn minions for Level 3
       setTimeout(() => {
         // Gun minions on the first level
-        for (let i = 0; i < 1; i++) {
-          setTimeout(() => {
-            const xPos = 35 + (i - 1.5) * 4; // Spread them out
-            const zPos = (Math.random() - 0.5) * 3;
-            // Create gun minions
-            const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man');
-            minions.push(newMinion);
+        // for (let i = 0; i < 1; i++) {
+        //   setTimeout(() => {
+        //     const xPos = 35 + (i - 1.5) * 4; // Spread them out
+        //     const zPos = (Math.random() - 0.5) * 3;
+        //     // Create gun minions
+        //     const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man');
+        //     minions.push(newMinion);
             
-            // Add spawn effect
-            createMinionSpawnEffect(scene, xPos, 1.5, zPos, 3);
-          }, i * 300); // Faster spawn timing
-        }
+        //     // Add spawn effect
+        //     createMinionSpawnEffect(scene, xPos, 1.5, zPos, 3);
+        //   }, i * 300); // Faster spawn timing
+        // }
         
         // Rifle minions on the middle platform
         for (let i = 0; i < 2; i++) {

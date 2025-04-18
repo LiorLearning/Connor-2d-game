@@ -78,7 +78,7 @@ export function showMathQuiz(hero, gameState) {
     subtitle.textContent = 'Answer correctly to restore your shield!';
     subtitle.style.color = '#8B4513';
   } else {
-    subtitle.textContent = 'Answer correctly to earn lightning bolts and INVINCIBILITY!';
+    subtitle.textContent = 'Answer correctly to earn lightning bolts!';
     subtitle.style.color = '#aaffff';
   }
   
@@ -292,8 +292,6 @@ export function showMathQuiz(hero, gameState) {
       // For regular bolt quiz
       pointsEarned.innerHTML = `
         <span style="color: #00ffff; font-size: 24px; font-weight: bold;">${earnedPoints}</span> lightning bolts earned!
-        <br>
-        <span style="color: #ff00ff; font-size: 20px; font-weight: bold;">+ 5 seconds INVINCIBILITY!</span>
       `;
     }
     
@@ -360,9 +358,6 @@ export function showMathQuiz(hero, gameState) {
           hero.lastHit = Date.now();
           hero.invulnerableTime = invincibilityTime; // Set invincibility duration based on correct answers
           
-          // Create or update invincibility timer UI
-          createInvincibilityTimer(hero, invincibilityTime);
-          
           // Special visual effect for math invincibility
           hero.sprite.material.color.set(0xff00ff); // Purple glow for math invincibility
           hero.glowSprite.material.color.set(0xff00ff);
@@ -377,12 +372,10 @@ export function showMathQuiz(hero, gameState) {
               hero.glowSprite.material.opacity = 0.3;
               
               // Remove timer if it exists
-              const timer = document.getElementById('invincibilityTimer');
-              if (timer) {
-                document.getElementById('renderDiv').removeChild(timer);
-              }
-              
-              createNotification('Invincibility expired!', { color: '#ff00ff', duration: 1500 });
+              // const timer = document.getElementById('invincibilityTimer');
+              // if (timer) {
+              //   document.getElementById('renderDiv').removeChild(timer);
+              // }
             }
           }, invincibilityTime);
         }
@@ -390,7 +383,6 @@ export function showMathQuiz(hero, gameState) {
         // Show collection notification
         createNotification(
           `${earnedPoints} LIGHTNING BOLTS ACQUIRED!<br>` + 
-          (correctAnswers > 0 ? `<span style="color: #ff00ff; font-size: 18px">5 SECONDS INVINCIBILITY!</span><br>` : '') +
           `<span style="font-size: 18px">Use E or F to attack minions</span>`,
           { color: '#00ffff', duration: 3000 }
         );
@@ -413,117 +405,4 @@ export function showMathQuiz(hero, gameState) {
   
   // Add quiz container to the DOM
   document.getElementById('renderDiv').appendChild(quizContainer);
-}
-
-// Function to create and update invincibility timer UI
-function createInvincibilityTimer(hero, duration) {
-  // Remove existing timer if present
-  const existingTimer = document.getElementById('invincibilityTimer');
-  if (existingTimer) {
-    document.getElementById('renderDiv').removeChild(existingTimer);
-  }
-  
-  // Create timer container
-  const timerContainer = document.createElement('div');
-  timerContainer.id = 'invincibilityTimer';
-  Object.assign(timerContainer.style, {
-    position: 'absolute',
-    top: '100px',
-    right: '20px',
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderRadius: '5px',
-    border: '2px solid #ff00ff',
-    boxShadow: '0 0 10px rgba(255, 0, 255, 0.5)',
-    padding: '10px',
-    zIndex: '100',
-    fontFamily: "'Orbitron', sans-serif",
-    color: '#ffffff',
-    textAlign: 'center',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    minWidth: '180px'
-  });
-  
-  // Add title
-  const title = document.createElement('div');
-  title.textContent = 'MATH INVINCIBILITY';
-  Object.assign(title.style, {
-    color: '#ff00ff',
-    fontSize: '16px',
-    fontWeight: 'bold',
-    marginBottom: '5px',
-    textShadow: '0 0 5px rgba(255, 0, 255, 0.8)'
-  });
-  timerContainer.appendChild(title);
-  
-  // Add timer bar container
-  const barContainer = document.createElement('div');
-  Object.assign(barContainer.style, {
-    width: '100%',
-    height: '15px',
-    backgroundColor: 'rgba(50, 50, 50, 0.5)',
-    borderRadius: '3px',
-    overflow: 'hidden',
-    marginBottom: '5px'
-  });
-  
-  // Add timer bar
-  const timerBar = document.createElement('div');
-  Object.assign(timerBar.style, {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#ff00ff',
-    borderRadius: '3px',
-    transition: 'width 1s linear'
-  });
-  barContainer.appendChild(timerBar);
-  timerContainer.appendChild(barContainer);
-  
-  // Add time remaining text
-  const timeText = document.createElement('div');
-  Object.assign(timeText.style, {
-    fontSize: '14px'
-  });
-  timerContainer.appendChild(timeText);
-  
-  // Add to DOM
-  document.getElementById('renderDiv').appendChild(timerContainer);
-  
-  // Start the timer countdown
-  const startTime = Date.now();
-  const endTime = startTime + duration;
-  
-  function updateTimer() {
-    const now = Date.now();
-    const remaining = Math.max(0, endTime - now);
-    const remainingSeconds = (remaining / 1000).toFixed(1);
-    
-    // Update time text
-    timeText.textContent = `${remainingSeconds}s remaining`;
-    
-    // Update progress bar
-    const percentRemaining = (remaining / duration) * 100;
-    timerBar.style.width = `${percentRemaining}%`;
-    
-    // Adjust color for last few seconds
-    if (percentRemaining < 20) {
-      timerBar.style.backgroundColor = '#ff3333';
-      timerContainer.style.borderColor = '#ff3333';
-      title.style.color = '#ff3333';
-    }
-    
-    // Continue updating if time remains and hero is still invincible
-    if (remaining > 0 && hero.isInvulnerable) {
-      requestAnimationFrame(updateTimer);
-    } else if (remaining <= 0) {
-      // Remove the timer when expired
-      if (timerContainer.parentNode) {
-        timerContainer.parentNode.removeChild(timerContainer);
-      }
-    }
-  }
-  
-  // Start updating the timer
-  updateTimer();
 }
