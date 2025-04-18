@@ -333,6 +333,15 @@ export function showMathQuiz(hero, gameState) {
       if (gameState && typeof gameState === 'object') {
         gameState.movementLocked = false;
         
+        // Add a temporary protection from minion attacks for 2 seconds
+        if (window.gameState) {
+          window.gameState.postMathQuizGracePeriod = true;
+
+          setTimeout(() => {
+            window.gameState.postMathQuizGracePeriod = false;
+          }, 2000); // 2 second grace period
+        }
+        
         // Check if this is a shield restoration quiz
         if (gameState.onQuizComplete && typeof gameState.onQuizComplete === 'function') {
           // Call the callback with earned points

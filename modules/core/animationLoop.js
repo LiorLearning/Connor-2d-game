@@ -9,10 +9,9 @@ import { createBoltCounter, updateBoltCounter, spawnBoltOnFirstRooftop, createBo
 
 // Import new modular components
 import { updateSpriteOrientation, handleHeroFalling, handleHeroInvulnerability } from '../entities/heroUpdates.js';
-import { updateMinions, updateMinionHealthBar, spawnMinions, checkLevelThreeStageTransition } from '../entities/minionUpdates.js';
+import { updateMinions, updateMinionHealthBar, spawnMinions } from '../entities/minionUpdates.js';
 import { handleEnemyIndicators, processHeroAttack } from '../ui/combatUI.js';
-import { advanceToNextLevel, handleJumpPrompt } from '../gameplay/levelManager.js';
-import { createSmokeExplosion } from '../effects/smokeEffects.js';
+import { advanceToNextLevel } from '../gameplay/levelManager.js';
 
 // Track time for frame-rate independent animations
 const clock = new THREE.Clock();
@@ -299,7 +298,7 @@ export function animationLoop(
     }
     
     // Check for enemies in attack range and show indicator
-    handleEnemyIndicators(hero, minions);
+    // handleEnemyIndicators(hero, minions);
     
     // Combat system - handle attacks
     if (gameState.gamePhase === "gameplay" && keys.attack && !gameState.movementLocked) {
@@ -315,9 +314,6 @@ export function animationLoop(
     
     // Handle hero invulnerability after hit
     handleHeroInvulnerability(hero);
-    
-    // Add directional indicator for the next rooftop if the hero is near the edge
-    handleJumpPrompt(hero, currentRooftop, minions, boltCollectible);
 
     // After the part where we check if hero is on any rooftop, add code to check for stairs in Level 3
 

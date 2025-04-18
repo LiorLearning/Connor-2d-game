@@ -255,39 +255,39 @@ function createStairs(scene, x, y, z) {
   }
   
   // Create a platform at the top where rifle minions will be
-  const platform = new THREE.Mesh(
-    new THREE.BoxGeometry(10, stepHeight, 5),
-    new THREE.MeshPhongMaterial({
-      color: 0x00aadd,
-      emissive: 0x006699,
-      emissiveIntensity: 0.6,
-      shininess: 60
-    })
-  );
+  // const platform = new THREE.Mesh(
+  //   new THREE.BoxGeometry(10, stepHeight, 5),
+  //   new THREE.MeshPhongMaterial({
+  //     color: 0x00aadd,
+  //     emissive: 0x006699,
+  //     emissiveIntensity: 0.6,
+  //     shininess: 60
+  //   })
+  // );
   
-  platform.position.set(
-    x + 8, // Position platform at end of stairs
-    y + (steps * stepHeight) + stepHeight/2,
-    z
-  );
+  // platform.position.set(
+  //   x + 8, // Position platform at end of stairs
+  //   y + (steps * stepHeight) + stepHeight/2,
+  //   z
+  // );
   
-  scene.add(platform);
+  // scene.add(platform);
   
-  // Add platform edge glow
-  const platformEdge = new THREE.Mesh(
-    new THREE.BoxGeometry(10, 0.1, 5.2),
-    new THREE.MeshBasicMaterial({
-      color: 0x00ffff,
-      transparent: true,
-      opacity: 0.6
-    })
-  );
-  platformEdge.position.set(
-    x + 8,
-    y + (steps * stepHeight) + stepHeight,
-    z
-  );
-  scene.add(platformEdge);
+  // // Add platform edge glow
+  // const platformEdge = new THREE.Mesh(
+  //   new THREE.BoxGeometry(10, 0.1, 5.2),
+  //   new THREE.MeshBasicMaterial({
+  //     color: 0x00ffff,
+  //     transparent: true,
+  //     opacity: 0.6
+  //   })
+  // );
+  // platformEdge.position.set(
+  //   x + 8,
+  //   y + (steps * stepHeight) + stepHeight,
+  //   z
+  // );
+  // scene.add(platformEdge);
 }
 
 // Export the createStairs function for direct use in main.js
@@ -300,7 +300,7 @@ function processMinionRangedAttack(minion, hero, scene, triggerScreenShake, upda
   if (minion.canShoot) { // Check if minion can shoot based on level
     const now = Date.now();
     // Define different ranges based on minion type
-    let rangedAttackDistance = 5; // Default range for regular minions
+    let rangedAttackDistance = 8; // Default range for regular minions
     
     // Increase range for rifle-man minions
     if (minion.type === 'rifle-man') {
@@ -313,8 +313,11 @@ function processMinionRangedAttack(minion, hero, scene, triggerScreenShake, upda
     const hoverAmount = Math.sin(Date.now() * 0.003 + minion.position.x) * 0.1;
 
     // If hero is in range and minion can shoot (cooldown check) and game is not paused/solving math
-    if (distanceToHero < rangedAttackDistance && now - minion.lastProjectile > minion.projectileCooldown 
-        && !(window.gameState && window.gameState.movementLocked)) {
+    // Also check for post-math quiz grace period
+    if (distanceToHero < rangedAttackDistance && 
+        now - minion.lastProjectile > minion.projectileCooldown && 
+        !(window.gameState && window.gameState.movementLocked) &&
+        !(window.gameState && window.gameState.postMathQuizGracePeriod)) {
       minion.lastProjectile = now;
 
       // Determine direction for projectile
@@ -791,7 +794,10 @@ function processMinionMeleeAttack(minion, hero, scene, triggerScreenShake, updat
   const distance = Math.abs(hero.position.x - minion.group.position.x);
 
   // If hero is close and minion is not on cooldown
-  if (distance < attackDistance && now - minion.lastHit > minion.hitCooldown) {
+  // Also check for post-math quiz grace period
+  if (distance < attackDistance && 
+      now - minion.lastHit > minion.hitCooldown && 
+      !(window.gameState && window.gameState.postMathQuizGracePeriod)) {
     minion.lastHit = now;
 
     // Only damage hero if not invulnerable

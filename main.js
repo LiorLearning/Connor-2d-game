@@ -133,11 +133,11 @@ function initGame() {
             const xPos = 60 + (i - 1) * 2; 
             const zPos = (Math.random() - 0.5) * 3;
             // Create rifle minions
-            const newMinion = createMinion(scene, xPos, 4.5, zPos, 3, 'rifle-man');
+            const newMinion = createMinion(scene, xPos, 5, zPos, 3, 'rifle-man');
             minions.push(newMinion);
             
             // Add spawn effect
-            createMinionSpawnEffect(scene, xPos, 4.5, zPos, 3);
+            createMinionSpawnEffect(scene, xPos, 5, zPos, 3);
           }, i * 300 + 1200); // Spawn after first group
         }
         

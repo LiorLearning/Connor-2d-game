@@ -27,7 +27,7 @@ export function createMinion(scene, x, y, z, level = 1, type = '') {
     hitCooldown: 500, // milliseconds between hits
     level: level, // Store the level
     canShoot: level >= 2 || type === 'gun-man' || type === 'rifle-man', // Level 2+ and Level 3 minions can shoot
-    projectileCooldown: type === 'rifle-man' ? 7000 : 9000, // Rifle minions shoot faster
+    projectileCooldown: type === 'rifle-man' ? 3000 : 3500, // Rifle minions shoot faster (decreased from 7000/9000)
     lastProjectile: 0, // Track last shot time
     damage: type === 'rifle-man' ? 20 : 15, // Rifle minions deal more damage
     type: type // Store the minion type
