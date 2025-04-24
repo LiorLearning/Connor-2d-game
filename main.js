@@ -113,20 +113,6 @@ function initGame() {
       
       // Spawn minions for Level 3
       setTimeout(() => {
-        // Gun minions on the first level
-        // for (let i = 0; i < 1; i++) {
-        //   setTimeout(() => {
-        //     const xPos = 35 + (i - 1.5) * 4; // Spread them out
-        //     const zPos = (Math.random() - 0.5) * 3;
-        //     // Create gun minions
-        //     const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man');
-        //     minions.push(newMinion);
-            
-        //     // Add spawn effect
-        //     createMinionSpawnEffect(scene, xPos, 1.5, zPos, 3);
-        //   }, i * 300); // Faster spawn timing
-        // }
-        
         // Rifle minions on the middle platform
         for (let i = 0; i < 2; i++) {
           setTimeout(() => {
@@ -138,14 +124,14 @@ function initGame() {
             
             // Add spawn effect
             createMinionSpawnEffect(scene, xPos, 5, zPos, 3);
-          }, i * 300 + 1200); // Spawn after first group
+          }, i * 100); // Faster spawn timing
         }
         
         // Update instructions
         instructions.innerHTML = hero.hasSmokeAttack ? 
           'LEVEL 3 MINIONS! Use E or F to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!' :
           'LEVEL 3 MINIONS! Find smoke bombs to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
-      }, 1000);
+      }, 500);
       
       // Remove the event listener after initialization
       document.removeEventListener('gamePhaseChange', initLevel3);

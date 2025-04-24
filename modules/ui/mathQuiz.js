@@ -3,6 +3,18 @@ import { createNotification } from './interface.js';
 import { createBoltCounter, updateBoltCounter } from '../collectibles/bolt.js';
 
 export function showMathQuiz(hero, gameState) {
+  // Make hero invincible while solving math problems
+  if (hero) {
+    hero.isInvulnerable = true;
+    hero.lastHit = Date.now();
+    hero.invulnerableTime = 600000; // 10 minutes (effectively permanent until we restore normal state)
+    
+    // Special visual effect for math invincibility
+    hero.sprite.material.color.set(0xff00ff); // Purple glow for math invincibility
+    hero.glowSprite.material.color.set(0xff00ff);
+    hero.glowSprite.material.opacity = 0.6;
+  }
+
   // Create an array of math questions and answers
   // Generate random single-digit multiplication questions
   const mathQuestions = [];
@@ -360,48 +372,36 @@ export function showMathQuiz(hero, gameState) {
         hero.hasBoltAttack = true;
         hero.boltCount = earnedPoints;
         
-        // Add invincibility if answered correctly
-        if (correctAnswers > 0) {
-          // Set hero to be invincible
-          hero.isInvulnerable = true;
-          hero.lastHit = Date.now();
-          hero.invulnerableTime = invincibilityTime; // Set invincibility duration based on correct answers
-          
-          // Special visual effect for math invincibility
-          hero.sprite.material.color.set(0xff00ff); // Purple glow for math invincibility
-          hero.glowSprite.material.color.set(0xff00ff);
-          hero.glowSprite.material.opacity = 0.6;
-          
-          // After invincibility ends, restore original appearance
-          setTimeout(() => {
-            if (hero.isInvulnerable) {
-              hero.isInvulnerable = false;
-              hero.sprite.material.color.set(0xffffff);
-              hero.glowSprite.material.color.set(0x00ffff);
-              hero.glowSprite.material.opacity = 0.3;
-              
-              // Remove timer if it exists
-              // const timer = document.getElementById('invincibilityTimer');
-              // if (timer) {
-              //   document.getElementById('renderDiv').removeChild(timer);
-              // }
-            }
-          }, invincibilityTime);
-        }
+        // Always give 5 seconds of invincibility after solving math problems
+        const bonusInvincibilityTime = 5000;
         
-        // Show collection notification
-        createNotification(
-          `${earnedPoints} LIGHTNING BOLTS ACQUIRED!<br>` + 
-          `<span style="font-size: 18px">Use E or F to attack minions</span>`,
-          { color: '#00ffff', duration: 3000 }
-        );
+        // Keep hero invincible for bonus time
+        hero.invulnerableTime = bonusInvincibilityTime;
+        hero.lastHit = Date.now();
         
-        // Create or update bolt counter UI
-        if (document.getElementById('boltCounter')) {
-          updateBoltCounter(hero);
-        } else {
-          createBoltCounter(hero);
-        }
+        // After bonus invincibility ends, restore original appearance
+        setTimeout(() => {
+          if (hero.isInvulnerable) {
+            hero.isInvulnerable = false;
+            hero.sprite.material.color.set(0xffffff);
+            hero.glowSprite.material.color.set(0x00ffff);
+            hero.glowSprite.material.opacity = 0.3;
+          }
+        }, bonusInvincibilityTime);
+      }
+      
+      // Show collection notification
+      createNotification(
+        `${earnedPoints} LIGHTNING BOLTS ACQUIRED!<br>` + 
+        `<span style="font-size: 18px">Use E or F to attack minions</span>`,
+        { color: '#00ffff', duration: 3000 }
+      );
+      
+      // Create or update bolt counter UI
+      if (document.getElementById('boltCounter')) {
+        updateBoltCounter(hero);
+      } else {
+        createBoltCounter(hero);
       }
     });
     

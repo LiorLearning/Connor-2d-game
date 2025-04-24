@@ -74,7 +74,7 @@ export function spawnMinions(scene, currentRooftop, minions, currentLevel, hero,
       
       // Create spawn effect
       createMinionSpawnEffect(scene, xPos, 1.5, zPos, currentLevel);
-    }, i * 500); // Slightly faster spawn timing
+    }, i * 200); // Faster spawn timing
   }
   
   // Update instructions

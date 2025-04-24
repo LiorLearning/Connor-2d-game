@@ -49,7 +49,7 @@ export function initVillain(scene) {
   // Add fade method
   villain.fadeOut = function(callback) {
     const startOpacity = 1.0;
-    const duration = 1500; // 1.5 seconds
+    const duration = 300; // 0.3 seconds
     const startTime = Date.now();
     
     function fadeVillain() {

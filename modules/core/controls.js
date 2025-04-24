@@ -13,13 +13,13 @@ export function setupControls(gameState, hero, introOverlay, speechBubble, instr
       // Dispatch custom event for game phase change
       document.dispatchEvent(new CustomEvent('gamePhaseChange', { detail: { phase: 'gameplay' } }));
 
-      // Show villain speech bubble for 3 seconds.
+      // Show villain speech bubble for 0.5 seconds.
       speechBubble.style.opacity = '1';
       speechBubble.style.left = '60%';
       speechBubble.style.top = '30%';
-      setTimeout(() => { speechBubble.style.opacity = '0'; }, 3000);
+      setTimeout(() => { speechBubble.style.opacity = '0'; }, 500);
 
-      // After 2 seconds, create a vanishing effect for the villain and unlock hero movement.
+      // After 0.2 seconds, create a vanishing effect for the villain and unlock hero movement.
       setTimeout(() => {
         // Villain vanishing effect
         villain.fadeOut(() => {
@@ -28,7 +28,7 @@ export function setupControls(gameState, hero, introOverlay, speechBubble, instr
           // Add pulse effect to hero when movement unlocks
           hero.createPulseEffect(trail);
         });
-      }, 2000);
+      }, 200);
     }
   });
   
