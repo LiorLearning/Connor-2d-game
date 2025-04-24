@@ -62,26 +62,6 @@ export function createRooftops(scene) {
   scene.add(midRooftop);
   rooftops.push(midRooftop);
   
-  // Create highest level platform for rifle minions
-  const highRooftop = new THREE.Mesh(
-    new THREE.BoxGeometry(18, 1, 10),
-    new THREE.MeshPhongMaterial({
-      color: 0xa0dced,
-      emissive: 0x4c7d8a,
-      emissiveIntensity: 0.6,
-      shininess: 90
-    })
-  );
-  // Position the highest rooftop
-  highRooftop.position.set(75, 6.5, 0);
-  highRooftop.userData = {
-    id: 3,
-    xMin: 66, // 75 - 9
-    xMax: 84  // 75 + 9
-  };
-  scene.add(highRooftop);
-  rooftops.push(highRooftop);
-  
   // Add glowing edges to rooftops
   addEdgesToRooftops(scene, rooftops);
   
