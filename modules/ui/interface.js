@@ -80,7 +80,7 @@ function createIntroOverlay() {
     <p style="font-size: 24px; margin: 10px 0; color: #ff3333;">VS <span style="font-style: italic;">SMOKE</span></p>
     <img src="./assets/minions.png" style="max-width: 200px; margin: 15px 0;" alt="Minions" />
     <p style="font-size: 22px; margin: 15px 0; color: #ff9933;">"Let's see if you can beat my team of 20 minions"</p>
-    <p style="font-size: 20px; margin-top: 20px;">Press Enter to Start</p>
+    <p style="font-size: 20px; margin-top: 20px;">Click to Start</p>
   `;
   
   introOverlay.appendChild(introBox);

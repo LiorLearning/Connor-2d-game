@@ -318,20 +318,39 @@ function processMinionRangedAttack(minion, hero, scene, triggerScreenShake, upda
         now - minion.lastProjectile > minion.projectileCooldown && 
         !(window.gameState && window.gameState.movementLocked) &&
         !(window.gameState && window.gameState.postMathQuizGracePeriod)) {
+        
+      // Set last projectile time to now to start the simple timer
       minion.lastProjectile = now;
-
-      // Determine direction for projectile
+      
+      // Set up the attack direction
       const attackDirection = minion.group.position.x < hero.position.x ? 1 : -1;
-
-      // Create projectile based on minion type
-      if (minion.type === 'gun-man') {
-        createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar);
-      } else if (minion.type === 'rifle-man') {
-        createRifleBulletProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar);
-      } else {
-        // Default projectile for Level 2 minions
-        createDefaultProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar);
-      }
+      
+      // Show a warning notification at the bottom of the screen
+      const warningText = minion.type === 'rifle-man' ? "⚠️ RIFLE MINION AIMING! ⚠️" : "⚠️ GUN MINION AIMING! ⚠️";
+      createNotification(warningText, { 
+        color: '#ff4444', 
+        duration: 1500, 
+        fontSize: '22px',
+        position: 'bottom',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)'
+      });
+      
+      // Add a 2-second delay before actually firing
+      setTimeout(() => {
+        // Check if the game is still active and not paused before firing
+        if (!(window.gameState && window.gameState.movementLocked) &&
+            !(window.gameState && window.gameState.postMathQuizGracePeriod)) {
+          // Create projectile based on minion type
+          if (minion.type === 'gun-man') {
+            createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar);
+          } else if (minion.type === 'rifle-man') {
+            createRifleBulletProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar);
+          } else {
+            // Default projectile for Level 2 minions
+            createDefaultProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar);
+          }
+        }
+      }, 2000);
     }
   }
 }
@@ -466,10 +485,10 @@ function createDefaultProjectile(scene, minion, hero, attackDirection, hoverAmou
 
 // Gun bullet projectile for Level 3 Stage 1 gun-man minions
 function createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar) {
-  // Create bullet projectile (circular geometry for bullet)
-  const projectileGeometry = new THREE.CircleGeometry(0.4, 0.2); // Small circle for bullet
+  // Create bullet projectile (cylinder geometry for realistic bullet)
+  const projectileGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.15, 8); // Small cylinder for bullet
   const projectileMaterial = new THREE.MeshBasicMaterial({
-    color: 0xff2222, // Orange/gold for gun bullet
+    color: 0xffdd44, // Bright yellow/gold color for better visibility
     transparent: true,
     opacity: 0.9,
     side: THREE.DoubleSide
@@ -483,8 +502,9 @@ function createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAm
     0
   );
 
-  // Make bullet flat
-  projectile.rotation.x = -Math.PI / 2;
+  // Rotate bullet to fly horizontally
+  projectile.rotation.z = Math.PI / 2;
+  projectile.rotation.y = attackDirection > 0 ? 0 : Math.PI;
 
   scene.add(projectile);
 
@@ -619,10 +639,10 @@ function createGunBulletProjectile(scene, minion, hero, attackDirection, hoverAm
 
 // Rifle bullet projectile for Level 3 Stage 2 rifle-man minions
 function createRifleBulletProjectile(scene, minion, hero, attackDirection, hoverAmount, triggerScreenShake, updateHealthBar) {
-  // Create rifle bullet projectile (elongated rectangle for rifle bullet)
-  const projectileGeometry = new THREE.PlaneGeometry(0.4, 0.2); // Elongated bullet
+  // Create rifle bullet projectile (longer cylinder for rifle bullet)
+  const projectileGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.25, 8); // Longer cylinder for rifle bullet
   const projectileMaterial = new THREE.MeshBasicMaterial({
-    color: 0xff2222, // Bright red for rifle bullet
+    color: 0xffee00, // Bright yellow color for better visibility
     transparent: true,
     opacity: 0.9,
     side: THREE.DoubleSide
@@ -636,8 +656,9 @@ function createRifleBulletProjectile(scene, minion, hero, attackDirection, hover
     0
   );
 
-  // Rotate based on attack direction
-  projectile.rotation.z = attackDirection > 0 ? 0 : Math.PI;
+  // Rotate bullet to fly horizontally
+  projectile.rotation.z = Math.PI / 2;
+  projectile.rotation.y = attackDirection > 0 ? 0 : Math.PI;
 
   scene.add(projectile);
 

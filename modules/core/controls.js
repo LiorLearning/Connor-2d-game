@@ -1,8 +1,9 @@
 export function setupControls(gameState, hero, introOverlay, speechBubble, instructions, villain, trail) {
   const keys = { left: false, right: false, jump: false, attack: false, dodge: false };
   
-  document.addEventListener('keydown', (event) => {
-    if (gameState.gamePhase === "intro" && event.key === 'Enter') {
+  // Add click event listener to start the game
+  introOverlay.addEventListener('click', () => {
+    if (gameState.gamePhase === "intro") {
       // Start gameplay and lock hero movement while villain is visible.
       gameState.gamePhase = "gameplay";
       gameState.movementLocked = true;
@@ -28,6 +29,14 @@ export function setupControls(gameState, hero, introOverlay, speechBubble, instr
           hero.createPulseEffect(trail);
         });
       }, 2000);
+    }
+  });
+  
+  document.addEventListener('keydown', (event) => {
+    if (gameState.gamePhase === "intro" && event.key === 'Enter') {
+      // Also keep Enter key functionality
+      const clickEvent = new MouseEvent('click');
+      introOverlay.dispatchEvent(clickEvent);
     } else if (gameState.gamePhase === "gameplay") {
       switch (event.key) {
         case 'ArrowLeft':
