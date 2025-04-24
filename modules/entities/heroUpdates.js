@@ -42,61 +42,9 @@ export function handleHeroFalling(hero, camera, villain, minions, scene, gameSta
     }
   }, 50);
   
-  // Full game restart
+  // Reload the game after delay
   setTimeout(() => {
-    // Reset hero position and parameters to initial state
-    hero.position.x = 0;
-    hero.position.y = 1.5;
-    hero.position.z = 0;
-    hero.velocity.x = 0;
-    hero.velocity.y = 0;
-    hero.falling = false;
-    hero.grounded = true;
-    hero.health = 100;
-    hero.isInvulnerable = true;
-    hero.lastHit = Date.now();
-    hero.isDodging = false;
-    hero.lastDodge = 0;
-    
-    // Reset villain position and make it visible again
-    villain.group.position.set(3, 1.5, 0);
-    villain.group.visible = true;
-    villain.sprite.material.opacity = 1.0;
-    villain.glowSprite.material.opacity = 0.3;
-    
-    // Reset minions by removing them from the scene
-    minions.forEach(minion => {
-      if (minion.group) {
-        scene.remove(minion.group);
-      }
-    });
-    minions.length = 0; // Clear the minions array
-    
-    // Reset game state variables
-    gameState.minionsSpawned = false;
-    gameState.minionsFought = 0;
-    gameState.gamePhase = "gameplay";
-    gameState.movementLocked = true;
-    
-    // Update health bar
-    updateHealthBar(hero.health);
-    
-    // Show restart notification
-    createNotification('GAME RESTARTED', { duration: 2000 });
-    
-    // Show villain speech bubble for 3 seconds
-    speechBubble.style.opacity = '1';
-    speechBubble.style.left = '60%';
-    speechBubble.style.top = '30%';
-    setTimeout(() => { speechBubble.style.opacity = '0'; }, 3000);
-    
-    // After 2 seconds, create vanishing effect for villain and unlock hero movement
-    setTimeout(() => {
-      villain.fadeOut(() => {
-        gameState.movementLocked = false;
-        hero.createPulseEffect(trail);
-      });
-    }, 2000);
+    window.location.reload();
   }, 2000);
 }
 

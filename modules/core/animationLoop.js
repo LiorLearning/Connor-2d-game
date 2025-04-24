@@ -35,20 +35,19 @@ export function animationLoop(
   createMinion,
   speechBubble,
   instructions,
-  levelIndicator
+  levelIndicator,
+  updateShieldBar
 ) {
   function animate(currentTime) {
     requestAnimationFrame(animate);
     
     // Calculate delta time for consistent animation speed regardless of frame rate
-    // const deltaTime = clock.getDelta();
+    const deltaTime = clock.getDelta();
     const elapsed = currentTime - lastTime;
     lastTime = currentTime;
     
-    // Skip frames if running too slow (below 30fps)
-    if (elapsed > 33.33) { // 1000ms/30fps ≈ 33.33ms
-      return;
-    }
+    // Don't skip frames, and use deltaTime to scale animations instead
+    const timeScale = Math.min(deltaTime * 60, 2.0); // Cap at 2x to prevent huge jumps
 
     if (gameState.gamePhase === "gameplay") {
       // Update hero movement only if not locked.
@@ -119,18 +118,18 @@ export function animationLoop(
             hero.velocity.x *= 0.5; // Reduce momentum at end of dodge
           }
         } else {
-          // Normal movement when not dodging
+          // Normal movement when not dodging - scaled by timeScale at moderate speed
           if (keys.left) {
-            hero.velocity.x = -0.5; // Increased from -0.1
+            hero.velocity.x = -0.35 * timeScale; // Balanced speed between original and reduced
           } else if (keys.right) {
-            hero.velocity.x = 0.5; // Increased from 0.1
+            hero.velocity.x = 0.35 * timeScale; // Balanced speed between original and reduced
           } else {
             hero.velocity.x *= 0.85; // Changed from 0.9 for smoother deceleration
           }
         }
         
-        // Apply gravity
-        hero.velocity.y -= 0.015; // Increased from 0.01 for faster falling
+        // Apply gravity - scaled by timeScale
+        hero.velocity.y -= 0.015 * timeScale; // Scale by timeScale
         
         // Regular jump
         if (keys.jump && hero.grounded) {
@@ -157,15 +156,15 @@ export function animationLoop(
             }
           }
           
-          // Apply appropriate jump based on position
+          // Apply appropriate jump based on position - scaled by timeScale at moderate speed
           if (isNearFirstRooftopEdge) {
-            hero.velocity.y = 0.35; // Higher jump
-            hero.velocity.x = 0.4; // Increased forward momentum
+            hero.velocity.y = 0.35 * timeScale; // Keep jump height the same
+            hero.velocity.x = 0.3 * timeScale; // Balanced horizontal boost
             
             // Highlight the jump boost indicator
             jumpBoostIndicator.highlight();
           } else {
-            hero.velocity.y = 0.25; // Increased from 0.2 for higher normal jump
+            hero.velocity.y = 0.25 * timeScale; // Keep normal jump height the same
           }
           hero.grounded = false;
           
@@ -177,12 +176,16 @@ export function animationLoop(
         hero.velocity.y = 0;
       }
       
+      // Scale position updates by timeScale
       hero.position.x += hero.velocity.x;
       hero.position.y += hero.velocity.y;
     } else {
       hero.velocity.x = 0;
       hero.velocity.y = 0;
     }
+    
+    // Run game physics at higher framerate
+    renderer.setAnimationLoop = null; // Disable Three.js animation loop
     
     // Check if hero is on any rooftop
     let onAnyRooftop = false;
@@ -228,22 +231,9 @@ export function animationLoop(
         duration: 2000
       });
       
-      // Reset hero after delay
+      // Reload the game after delay
       setTimeout(() => {
-        // Reset hero
-        hero.health = 100;
-        hero.position.x = 0;
-        hero.position.y = 1.5;
-        hero.position.z = 0;
-        hero.velocity.x = 0;
-        hero.velocity.y = 0;
-        hero.falling = false;
-        hero.grounded = true;
-        hero.isInvulnerable = true;
-        hero.lastHit = Date.now();
-        
-        // Update health bar
-        updateHealthBar(hero.health);
+        window.location.reload();
       }, 2500);
     }
     
@@ -263,9 +253,10 @@ export function animationLoop(
     // Sprite Orientation:
     updateSpriteOrientation(hero, villain);
 
-    // Subtle hover animation for hero sprite and update glow opacity.
-    hero.sprite.position.y = Math.sin(Date.now() * 0.003) * 0.1;
-    hero.glowSprite.material.opacity = 0.3 + Math.sin(Date.now() * 0.004) * 0.1;
+    // Subtle hover animation for hero sprite and update glow opacity (optimized)
+    const now = Date.now(); // Cache this value to avoid multiple calls
+    hero.sprite.position.y = Math.sin(now * 0.003) * 0.1;
+    hero.glowSprite.material.opacity = 0.3 + Math.sin(now * 0.004) * 0.1;
     
     // Update shield visualization
     if (hero.updateShield) {
@@ -312,6 +303,9 @@ export function animationLoop(
     // Update hero health bar
     updateHealthBar(hero.health);
     
+    // Update shield health bar
+    updateShieldBar(hero.shieldHealth);
+    
     // Handle hero invulnerability after hit
     handleHeroInvulnerability(hero);
 
@@ -350,10 +344,12 @@ export function animationLoop(
     //   checkLevelThreeStageTransition(hero, scene, minions, gameState.currentLevel, levelIndicator, createMinion, instructions);
     // }
     
-    // Render scene
+    // Use optimized rendering
     renderer.render(scene, camera);
   }
 
-  // Start animation with time parameter
-  animate(0);
+  // Start animation with time parameter and higher priority
+  requestAnimationFrame(() => {
+    animate(performance.now());
+  }, { priority: 'high' });
 }

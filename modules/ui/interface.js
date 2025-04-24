@@ -34,12 +34,16 @@ export function initUI() {
   // Create health bar
   const updateHealthBar = createHealthBar();
   
+  // Create shield health bar
+  const updateShieldBar = createShieldBar();
+  
   return {
     introOverlay,
     speechBubble,
     instructions,
     levelIndicator,
-    updateHealthBar
+    updateHealthBar,
+    updateShieldBar
   };
 }
 
@@ -272,6 +276,71 @@ function createHealthBar() {
     } else {
       healthFill.style.backgroundColor = '#ff3333'; // Red for low health
     }
+  };
+}
+
+// Create shield health bar
+function createShieldBar() {
+  // Create container div
+  const shieldContainer = document.createElement('div');
+  shieldContainer.id = 'heroShieldContainer';
+  Object.assign(shieldContainer.style, {
+    position: 'absolute',
+    top: '20px',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '200px',
+    height: '30px',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    border: '2px solid #8B4513',
+    borderRadius: '5px',
+    overflow: 'hidden',
+    zIndex: '100'
+  });
+  
+  // Create shield fill
+  const shieldFill = document.createElement('div');
+  shieldFill.id = 'heroShieldFill';
+  Object.assign(shieldFill.style, {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#8B4513', // Brown color for shield
+    transition: 'width 0.3s ease-out'
+  });
+  
+  // Create label
+  const shieldLabel = document.createElement('div');
+  shieldLabel.id = 'heroShieldLabel';
+  Object.assign(shieldLabel.style, {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#ffffff',
+    fontFamily: "'Orbitron', sans-serif",
+    fontSize: '14px',
+    textShadow: '0 0 3px #000',
+    zIndex: '101'
+  });
+  shieldLabel.textContent = 'SHIELD: 100/100';
+  
+  // Assemble shield bar
+  shieldContainer.appendChild(shieldFill);
+  shieldContainer.appendChild(shieldLabel);
+  document.getElementById('renderDiv').appendChild(shieldContainer);
+  
+  // Return update function
+  return function updateShieldBar(shield) {
+    const percentage = Math.max(0, Math.min(100, shield));
+    shieldFill.style.width = `${percentage}%`;
+    shieldLabel.textContent = `SHIELD: ${Math.round(percentage)}/100`;
+    
+    // Change opacity based on shield level
+    shieldFill.style.opacity = 0.6 + (percentage / 250); // Opacity from 0.6 to 1.0
   };
 }
 

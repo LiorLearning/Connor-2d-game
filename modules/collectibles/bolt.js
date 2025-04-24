@@ -164,8 +164,8 @@ export function spawnBoltOnFirstRooftop(scene, hero, gameState, showMathQuiz) {
   const xPos = -5 + Math.random() * 15; // Random position between -5 and 10 on first rooftop
   const yPos = 1.5; // Slightly above the rooftop
   
-  // Create a directional arrow indicator for the bolt
-  const arrowIndicator = createBoltArrowIndicator(xPos, yPos, hero);
+  // Store the bolt position globally so it can be accessed by other functions
+  window.lastBoltPosition = { x: xPos, y: yPos };
   
   // Create a bolt with the same design as the original collectible
   const respawnedBolt = {
@@ -251,6 +251,11 @@ export function spawnBoltOnFirstRooftop(scene, hero, gameState, showMathQuiz) {
   respawnNotification.innerHTML = 'BOLT RESPAWNED!<br><span style="font-size: 16px">Return to first rooftop</span>';
   document.getElementById('renderDiv').appendChild(respawnNotification);
   
+  // Create a directional arrow that points to the bolt
+  // Specifically created for when a bolt spawns
+  createBoltArrowIndicator(xPos, yPos, hero);
+  
+  // Display the notification
   setTimeout(() => { 
     respawnNotification.style.opacity = '1';
     setTimeout(() => {
@@ -319,10 +324,14 @@ export function spawnBoltOnFirstRooftop(scene, hero, gameState, showMathQuiz) {
       }
       
       // Show math quiz dialog - reuse the same quiz function as the initial bolt
-      // Remove the arrow indicator if it exists
+      // Remove the arrow indicator and notification if they exist
       const arrowIndicator = document.getElementById('boltArrowIndicator');
+      const boltNotification = document.getElementById('boltAvailableNotification');
       if (arrowIndicator) {
         document.getElementById('renderDiv').removeChild(arrowIndicator);
+      }
+      if (boltNotification) {
+        document.getElementById('renderDiv').removeChild(boltNotification);
       }
       
       showMathQuiz(hero, gameState);
@@ -343,7 +352,19 @@ export function spawnBoltOnFirstRooftop(scene, hero, gameState, showMathQuiz) {
 }
 
 // Create a directional arrow indicator that points to the bolt
-function createBoltArrowIndicator(targetX, targetY, hero) {
+export function createBoltArrowIndicator(targetX, targetY, hero) {
+  // First, remove any existing arrow indicator to prevent duplicates
+  const existingArrow = document.getElementById('boltArrowIndicator');
+  const existingNotification = document.getElementById('boltAvailableNotification');
+  
+  if (existingArrow) {
+    document.getElementById('renderDiv').removeChild(existingArrow);
+  }
+  
+  if (existingNotification) {
+    document.getElementById('renderDiv').removeChild(existingNotification);
+  }
+  
   // Create a container for the arrow
   const arrowContainer = document.createElement('div');
   arrowContainer.id = 'boltArrowIndicator';
@@ -357,9 +378,9 @@ function createBoltArrowIndicator(targetX, targetY, hero) {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: '100',
+    zIndex: '1000', // Increased z-index to ensure visibility
     pointerEvents: 'none',
-    opacity: '0',
+    opacity: '0.8', // Start visible
     transition: 'opacity 0.3s'
   });
   
@@ -378,77 +399,118 @@ function createBoltArrowIndicator(targetX, targetY, hero) {
   arrowContainer.appendChild(arrow);
   document.getElementById('renderDiv').appendChild(arrowContainer);
   
+  // Create notification element for when bolts are available
+  const boltNotification = document.createElement('div');
+  boltNotification.id = 'boltAvailableNotification';
+  Object.assign(boltNotification.style, {
+    position: 'absolute',
+    fontFamily: "'Orbitron', sans-serif",
+    fontSize: '14px',
+    color: '#00ffff',
+    backgroundColor: 'rgba(0, 10, 20, 0.7)',
+    padding: '5px 10px',
+    borderRadius: '5px',
+    pointerEvents: 'none',
+    opacity: '0.8', // Start visible
+    transition: 'opacity 0.3s',
+    zIndex: '1000', // Increased z-index to ensure visibility
+    textShadow: '0 0 5px rgba(0, 255, 255, 0.8)',
+    whiteSpace: 'nowrap'
+  });
+  boltNotification.textContent = 'BOLT AVAILABLE!';
+  document.getElementById('renderDiv').appendChild(boltNotification);
+  
   // Update the arrow position and rotation in the animation loop
   function updateArrowIndicator() {
-    // Only show the arrow when the player is low on bolts (0 or 1 remaining)
-    if (hero.hasBoltAttack && hero.boltCount <= 1) {
-      // Make the arrow visible
-      arrowContainer.style.opacity = '1';
+    // Always show the arrow if we specifically created it
+    // (The arrow should always be visible when created through the combatUI)
+    
+    // Convert 3D world position to screen space
+    const targetVector = new THREE.Vector3(targetX, targetY, 0);
+    const screenPosition = worldToScreen(targetVector);
+    
+    // Calculate direction from player to bolt
+    const playerScreenPos = worldToScreen(new THREE.Vector3(hero.position.x, hero.position.y, 0));
+    
+    // Calculate angle for arrow to point toward bolt
+    const dx = screenPosition.x - playerScreenPos.x;
+    const dy = screenPosition.y - playerScreenPos.y;
+    const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+    
+    // Position the arrow at the edge of the screen if the target is off-screen
+    const margin = 100; // Margin from screen edge
+    let arrowX, arrowY;
+    
+    // Check if target is off-screen
+    const isOffScreen = 
+      screenPosition.x < margin || 
+      screenPosition.x > window.innerWidth - margin || 
+      screenPosition.y < margin || 
+      screenPosition.y > window.innerHeight - margin;
+    
+    if (isOffScreen) {
+      // Calculate position at screen edge
+      const screenCenterX = window.innerWidth / 2;
+      const screenCenterY = window.innerHeight / 2;
       
-      // Convert 3D world position to screen space
-      const targetVector = new THREE.Vector3(targetX, targetY, 0);
-      const screenPosition = worldToScreen(targetVector);
+      // Calculate angle from screen center to target
+      const targetAngle = Math.atan2(screenPosition.y - screenCenterY, screenPosition.x - screenCenterX);
       
-      // Calculate direction from player to bolt
-      const playerScreenPos = worldToScreen(new THREE.Vector3(hero.position.x, hero.position.y, 0));
+      // Calculate position on screen edge
+      const edgeRadius = Math.min(window.innerWidth, window.innerHeight) / 2 - margin;
+      arrowX = screenCenterX + Math.cos(targetAngle) * edgeRadius;
+      arrowY = screenCenterY + Math.sin(targetAngle) * edgeRadius;
       
-      // Calculate angle for arrow to point toward bolt
-      const dx = screenPosition.x - playerScreenPos.x;
-      const dy = screenPosition.y - playerScreenPos.y;
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-      
-      // Position the arrow at the edge of the screen if the target is off-screen
-      const margin = 100; // Margin from screen edge
-      let arrowX, arrowY;
-      
-      // Check if target is off-screen
-      const isOffScreen = 
-        screenPosition.x < margin || 
-        screenPosition.x > window.innerWidth - margin || 
-        screenPosition.y < margin || 
-        screenPosition.y > window.innerHeight - margin;
-      
-      if (isOffScreen) {
-        // Calculate position at screen edge
-        const screenCenterX = window.innerWidth / 2;
-        const screenCenterY = window.innerHeight / 2;
-        
-        // Calculate angle from screen center to target
-        const targetAngle = Math.atan2(screenPosition.y - screenCenterY, screenPosition.x - screenCenterX);
-        
-        // Calculate position on screen edge
-        const edgeRadius = Math.min(window.innerWidth, window.innerHeight) / 2 - margin;
-        arrowX = screenCenterX + Math.cos(targetAngle) * edgeRadius;
-        arrowY = screenCenterY + Math.sin(targetAngle) * edgeRadius;
-      } else {
-        // If on screen, position near the target
-        arrowX = screenPosition.x;
-        arrowY = screenPosition.y - 60; // Position slightly above the target
-      }
-      
-      // Update the arrow's position and rotation
-      arrowContainer.style.left = `${arrowX - 20}px`; // Center the arrow
-      arrowContainer.style.top = `${arrowY - 20}px`;
-      arrow.style.transform = `rotate(${angle - 90}deg)`; // -90 to adjust for the arrow pointing up by default
-      
-      // Pulse effect
-      const pulse = (Math.sin(Date.now() * 0.005) + 1) * 0.25 + 0.5;
-      arrowContainer.style.transform = `scale(${pulse})`;
+      // Position the notification near the arrow
+      boltNotification.style.left = `${arrowX + 25}px`;
+      boltNotification.style.top = `${arrowY}px`;
+      boltNotification.style.opacity = '0.8';
     } else {
-      // Hide the arrow when not needed
-      arrowContainer.style.opacity = '0';
+      // If on screen, position near the target
+      arrowX = screenPosition.x;
+      arrowY = screenPosition.y - 60; // Position slightly above the target
+      
+      // Hide notification when target is on screen but make arrow more visible
+      boltNotification.style.opacity = '0';
+      arrowContainer.style.opacity = '1';
     }
     
+    // Update the arrow's position and rotation
+    arrowContainer.style.left = `${arrowX - 20}px`; // Center the arrow
+    arrowContainer.style.top = `${arrowY - 20}px`;
+    arrow.style.transform = `rotate(${angle - 90}deg)`; // -90 to adjust for the arrow pointing up by default
+    
+    // Pulse effect
+    const pulse = (Math.sin(Date.now() * 0.005) + 1) * 0.25 + 0.5;
+    arrowContainer.style.transform = `scale(${pulse})`;
+    
+    // Continue animation loop
     requestAnimationFrame(updateArrowIndicator);
   }
   
+  // Start the animation loop
   updateArrowIndicator();
+  
+  // Log to console for debugging
+  console.log('Arrow indicator created pointing to:', targetX, targetY);
   
   return {
     element: arrowContainer,
+    notification: boltNotification,
     update: updateArrowIndicator,
     remove: function() {
-      document.getElementById('renderDiv').removeChild(arrowContainer);
+      const arrow = document.getElementById('boltArrowIndicator');
+      const notification = document.getElementById('boltAvailableNotification');
+      
+      if (arrow) {
+        document.getElementById('renderDiv').removeChild(arrow);
+      }
+      
+      if (notification) {
+        document.getElementById('renderDiv').removeChild(notification);
+      }
+      
+      console.log('Arrow indicator removed');
     }
   };
 }

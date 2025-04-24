@@ -37,7 +37,8 @@ function initGame() {
   
   // Initialize UI elements
   const { 
-    updateHealthBar, 
+    updateHealthBar,
+    updateShieldBar,
     introOverlay, 
     speechBubble, 
     instructions, 
@@ -88,7 +89,8 @@ function initGame() {
     createMinion,
     speechBubble,
     instructions,
-    levelIndicator
+    levelIndicator,
+    updateShieldBar
   );
   
   // Initialize Level 3 minions when game phase changes to gameplay

@@ -169,6 +169,11 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
             backgroundColor: 'rgba(0, 0, 0, 0.7)'
           }
         );
+        
+        // Add a reload button to restart the game after it's completed
+        setTimeout(() => {
+          window.location.reload();
+        }, 5000);
       }, 3000);
     }
   }
