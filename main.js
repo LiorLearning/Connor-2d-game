@@ -31,7 +31,7 @@ function initGame() {
   const hero = initHero(scene);
   // Add gameState to hero
   hero.gameState = {
-    currentStage: 3
+    currentStage: 1
   };
   const villain = initVillain(scene);
   
@@ -55,17 +55,20 @@ function initGame() {
     currentLevel: 3
   };
   
-  // Make gameState globally available for minions to access
-  window.gameState = gameState;
+  // Create minions array
+  const minions = [];
+  
+  // Make gameState and minions globally available
+  window.gameState = {
+    ...gameState,
+    minions: minions
+  };
   
   // Create collectibles
   const boltCollectible = createBoltCollectible(scene, hero, gameState, showMathQuiz);
   
   // Initialize effects
   const trail = initTrail(scene);
-  
-  // Create minions array
-  const minions = [];
   
   // Setup keyboard controls
   const keys = setupControls(gameState, hero, introOverlay, speechBubble, instructions, villain, trail);

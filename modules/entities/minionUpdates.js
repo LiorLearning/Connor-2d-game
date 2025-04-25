@@ -5,6 +5,20 @@ import { advanceToNextLevel } from '../gameplay/levelManager.js';
 import { showMathQuiz } from '../ui/mathQuiz.js';
 
 // Export minion update functions
+// Track rifle minions state
+let rifleMinionsDefeated = 0;
+let stage2Timer = null;
+let stage2Unlocked = false;
+
+export function resetRifleMinionsState() {
+  rifleMinionsDefeated = 0;
+  if (stage2Timer) {
+    clearTimeout(stage2Timer);
+    stage2Timer = null;
+  }
+  stage2Unlocked = false;
+}
+
 export function updateMinions(hero, minions, scene, triggerScreenShake, updateHealthBar) {
   minions.forEach(minion => {
     if (minion.active) {
@@ -83,10 +97,87 @@ export function spawnMinions(scene, currentRooftop, minions, currentLevel, hero,
     'BOLT\'S GUN MINIONS BLOCK YOUR PATH! Find bolts to attack! Dodge [SHIFT] or Jump [SPACE] to evade bullets!';
 }
 
+// Function to show the stage 2 timeout popup
+function showStage2TimeoutPopup() {
+  stage2Unlocked = true;
+  
+  // Create overlay container
+  const overlayContainer = document.createElement('div');
+  overlayContainer.id = 'stage2TimeoutOverlay';
+  Object.assign(overlayContainer.style, {
+    position: 'absolute',
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: '1000'
+  });
+  
+  // Create message container
+  const messageContainer = document.createElement('div');
+  Object.assign(messageContainer.style, {
+    backgroundColor: 'rgba(20, 30, 40, 0.9)',
+    border: '2px solid #ff3333',
+    borderRadius: '10px',
+    padding: '30px',
+    maxWidth: '80%',
+    textAlign: 'center',
+    color: '#ffffff',
+    fontFamily: "'Orbitron', sans-serif"
+  });
+  
+  // Message content
+  messageContainer.innerHTML = `
+    <h2 style='color: #ff3333; font-size: 28px; margin-bottom: 20px;'>Time's Up!</h2>
+    <p style='font-size: 20px; margin-bottom: 20px;'>To unlock more rifle minions, you need to come tomorrow.</p>
+    <button id='closeTimeoutPopup' style='background-color: #ff3333; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-family: Orbitron, sans-serif;'>Close</button>
+  `;
+  
+  overlayContainer.appendChild(messageContainer);
+  document.getElementById('renderDiv').appendChild(overlayContainer);
+  
+  // Add event listener to close button
+  document.getElementById('closeTimeoutPopup').addEventListener('click', () => {
+    document.getElementById('renderDiv').removeChild(overlayContainer);
+    
+    // If game state exists, unlock movement
+    if (window.gameState) {
+      window.gameState.movementLocked = false;
+    }
+  });
+  
+  // Lock movement while popup is shown
+  if (window.gameState) {
+    window.gameState.movementLocked = true;
+  }
+}
+
+// Function to spawn new rifle minions
+function spawnRifleMinions(scene, minions) {
+  // Spawn 2 rifle minions on the platform
+  for (let i = 0; i < 2; i++) {
+    setTimeout(() => {
+      const xPos = 80 + (i - 1) * 2;
+      const zPos = (Math.random() - 0.5) * 3;
+      // Create rifle minions on elevated platform
+      const newMinion = createMinion(scene, xPos, 5, zPos, 3, 'rifle-man');
+      minions.push(newMinion);
+      
+      // Add spawn effect
+      createMinionSpawnEffect(scene, xPos, 5, zPos, 3);
+    }, i * 300);
+  }
+}
+
 export function defeatedMinion(minion, scene, minionsFought, totalMinions, 
     currentLevel, levelIndicator, hero, updateHealthBar, trail, minions, instructions, createMinion) {
   
   minion.active = false;
+  minion.defeated = true;
   
   // Create defeat effect
   createMinionHitEffect(scene, minion.group.position);
@@ -100,9 +191,32 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
   if (minion.type === 'gun-man') {
     defeatMessage = `GUN MINION DEFEATED!`;
     defeatColor = '#ffaa00';
+    
+    // Log for debugging
+    console.log('Gun minion defeated!', minion.position);
   } else if (minion.type === 'rifle-man') {
     defeatMessage = `RIFLE MINION DEFEATED!`;
     defeatColor = '#ff5555';
+    
+    // Track rifle minion defeats for respawning
+    rifleMinionsDefeated++;
+    
+    // If stage2Timer isn't set yet, start the 10-second timer for this stage
+    if (!stage2Timer && !stage2Unlocked && hero.gameState && hero.gameState.currentStage === 2) {
+      stage2Timer = setTimeout(() => {
+        showStage2TimeoutPopup();
+      }, 10000); // 10 seconds
+    }
+    
+    // Spawn new rifle minions after a short delay when 2 are defeated
+    if (rifleMinionsDefeated % 2 === 0 && !stage2Unlocked && hero.gameState && hero.gameState.currentStage === 2) {
+      setTimeout(() => {
+        // Only respawn if we're still in stage 2 and the timeout hasn't occurred
+        if (hero.gameState && hero.gameState.currentStage === 2 && !stage2Unlocked) {
+          spawnRifleMinions(scene, minions);
+        }
+      }, 1500);
+    }
   } else {
     defeatMessage = `MINION DEFEATED!`;
     defeatColor = '#bb88ff';
@@ -135,16 +249,68 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
     }
   } 
   else if (currentLevel === 3) {
-    // Count remaining active minions
+    // Count remaining active minions and check types
     let remainingMinions = 0;
+    let remainingGunMen = 0;
+    let remainingRifleMen = 0;
+    
     for (let i = 0; i < minions.length; i++) {
       if (minions[i].active) {
         remainingMinions++;
+        
+        // Count by type
+        if (minions[i].type === 'gun-man') {
+          remainingGunMen++;
+        } else if (minions[i].type === 'rifle-man') {
+          remainingRifleMen++;
+        }
       }
     }
     
-    // If no minions left, advance to next level or complete the game
+    // Debug log
+    console.log(`Remaining minions: ${remainingMinions} (Gun: ${remainingGunMen}, Rifle: ${remainingRifleMen})`);
+    
+    // Check if this was a gun-man and count if any remain
+    if (minion.type === 'gun-man') {
+      console.log(`Gun minion defeated at ${minion.group.position.x}! Remaining: ${remainingGunMen}`);
+    }
+    
+    // Check if no gun minions remain (whether this was the last one or not)
+    if (remainingGunMen === 0) {
+      // Mark gunmen as defeated to allow stair access regardless of position
+      hero.allGunmenDefeated = true;
+      console.log('All gun minions defeated! Stairs unlocked.');
+      
+      // Restore full health
+      hero.health = 100;
+      updateHealthBar(hero.health);
+      
+      // Create health restoration effect
+      createNotification(
+        'ALL GUN MINIONS DEFEATED! PATH UNLOCKED! HEALTH FULLY RESTORED!',
+        { color: '#00ff88', duration: 3000 }
+      );
+      
+      // Create healing visual effect around hero
+      trail.createHealingParticles(hero.position);
+      
+      // Show notification about stairs
+      setTimeout(() => {
+        createNotification(
+          'You can now go up the stairs!<br><span style="font-size: 20px">Proceed to the next stage</span>',
+          {
+            color: '#00ffff',
+            fontSize: '28px',
+            duration: 4000,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)'
+          }
+        );
+      }, 3000);
+    }
+    
+    // If no minions left at all, complete the game
     if (remainingMinions === 0) {
+      // Final level completion - all minions including rifle-men are defeated
       // Restore full health
       hero.health = 100;
       updateHealthBar(hero.health);

@@ -6,12 +6,148 @@ import { triggerScreenShake } from './scene.js';
 import { createJumpFlashEffect } from '../environment/jumpBoost.js';
 import { createNotification } from '../ui/interface.js';
 import { createBoltCounter, updateBoltCounter, spawnBoltOnFirstRooftop, createBoltProjectile } from '../collectibles/bolt.js';
+import { changeBackgroundMusic } from './audio.js';
 
 // Import new modular components
 import { updateSpriteOrientation, handleHeroFalling, handleHeroInvulnerability } from '../entities/heroUpdates.js';
 import { updateMinions, updateMinionHealthBar, spawnMinions } from '../entities/minionUpdates.js';
 import { handleEnemyIndicators, processHeroAttack } from '../ui/combatUI.js';
 import { advanceToNextLevel } from '../gameplay/levelManager.js';
+
+// Function to transition to stage 2 with new background and music
+function transitionToStage2(scene, hero) {
+  // Mark the hero as having transitioned to prevent multiple transitions
+  hero.stageTransitioned = true;
+  console.log('Stage transition function called - hero marked as transitioned');
+  
+  // Set game state to stage 2
+  if (hero.gameState) {
+    hero.gameState.currentStage = 2;
+  }
+  
+  // Show transition notification
+  createNotification(
+    'STAGE 2 UNLOCKED!<br><span style="font-size: 20px">Proceeding to the next stage...</span>',
+    {
+      color: '#00ffff',
+      fontSize: '36px',
+      duration: 4000,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)'
+    }
+  );
+  
+  // Fade out current screen
+  const fadeOverlay = document.createElement('div');
+  fadeOverlay.id = 'fadeOverlay';
+  Object.assign(fadeOverlay.style, {
+    position: 'fixed',
+    top: '0',
+    left: '0',
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'black',
+    opacity: '0',
+    transition: 'opacity 2s',
+    zIndex: '1000',
+    pointerEvents: 'none'
+  });
+  document.body.appendChild(fadeOverlay);
+  console.log('Fade overlay created');
+  
+  // Start fade in
+  setTimeout(() => {
+    fadeOverlay.style.opacity = '1';
+    console.log('Fade in started');
+  }, 100);
+  
+  // Change background and music after fade completes
+  setTimeout(() => {
+    console.log('Loading new background texture...');
+    // Change background texture
+    const textureLoader = new THREE.TextureLoader();
+    textureLoader.load('assets/background2.png', 
+      // On successful load
+      (newBackgroundTexture) => {
+        console.log('New background loaded successfully!');
+        scene.background = newBackgroundTexture;
+        
+        // Change background music using our dedicated function
+        console.log('Changing background music...');
+        changeBackgroundMusic('./assets/bg-music2.mp3', 2000, 2000);
+        
+        // Spawn rifle minions for Stage 2
+        setTimeout(() => {
+          // Import necessary functions
+          import('../entities/minionUpdates.js').then(minionUpdatesModule => {
+            // Reset rifle minions state
+            minionUpdatesModule.resetRifleMinionsState();
+            
+            // Spawn initial rifle minions on the elevated platform
+            for (let i = 0; i < 2; i++) {
+              setTimeout(() => {
+                const xPos = 80 + (i - 1) * 2;
+                const zPos = (Math.random() - 0.5) * 3;
+                // Create rifle minions
+                import('../entities/minion.js').then(minionModule => {
+                  const newMinion = minionModule.createMinion(scene, xPos, 5, zPos, 3, 'rifle-man');
+                  if (window.gameState && window.gameState.minions) {
+                    window.gameState.minions.push(newMinion);
+                  }
+                  
+                  // Add spawn effect
+                  minionModule.createMinionSpawnEffect(scene, xPos, 5, zPos, 3);
+                });
+              }, i * 300);
+            }
+            
+            // Show notification about rifle minions
+            createNotification(
+              'RIFLE MINIONS AHEAD!<br><span style="font-size: 16px">Defeat them quickly - you only have 10 seconds!</span>',
+              {
+                color: '#ff5555',
+                fontSize: '26px',
+                duration: 3000,
+                backgroundColor: 'rgba(0, 0, 0, 0.7)'
+              }
+            );
+          });
+        }, 2000);
+        
+        // Fade out overlay
+        setTimeout(() => {
+          const overlay = document.getElementById('fadeOverlay');
+          if (overlay) {
+            overlay.style.opacity = '0';
+            console.log('Fade out started');
+            setTimeout(() => {
+              if (document.body.contains(overlay)) {
+                document.body.removeChild(overlay);
+                console.log('Fade overlay removed');
+              }
+            }, 2000);
+          }
+        }, 1000);
+      },
+      // Progress
+      (progress) => {
+        console.log(`Background loading progress: ${Math.round(progress.loaded / progress.total * 100)}%`);
+      },
+      // On error loading texture
+      (err) => {
+        console.error('Error loading new background:', err);
+        const overlay = document.getElementById('fadeOverlay');
+        if (overlay) {
+          overlay.style.opacity = '0';
+          setTimeout(() => {
+            if (document.body.contains(overlay)) {
+              document.body.removeChild(overlay);
+            }
+          }, 2000);
+        }
+      }
+    );
+  }, 2000);
+}
 
 // Track time for frame-rate independent animations
 const clock = new THREE.Clock();
@@ -194,6 +330,45 @@ export function animationLoop(
     // Define the hero's sprite width for collision purposes
     const heroHalfWidth = 1.0;
     
+    // Check for invisible wall at the stairs (around x=70) if gunmen aren't defeated
+    if (gameState.currentLevel === 3 && !hero.allGunmenDefeated && 
+        hero.position.x > 68 && hero.position.x < 72) {
+      // Push hero back from the invisible wall
+      hero.position.x = 68;
+      hero.velocity.x = -0.1; // Slight push back
+      
+      // Debug log
+      console.log('Invisible wall activated:', {
+        heroX: hero.position.x,
+        allGunmenDefeated: hero.allGunmenDefeated
+      });
+      
+      // Show notification about the blocked path
+      if (Date.now() - (hero.lastWallNotification || 0) > 5000) { // Show message only every 5 seconds
+        hero.lastWallNotification = Date.now();
+        createNotification(
+          'PATH BLOCKED!<br><span style="font-size: 16px">Defeat all gun minions first!</span>',
+          { 
+            color: '#ff3333', 
+            fontSize: '24px', 
+            duration: 2000,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)'
+          }
+        );
+      }
+    }
+    
+    // Debug log if player is near the stairs
+    if (gameState.currentLevel === 3 && hero.position.x > 67 && hero.position.x < 73) {
+      // Check every second to avoid console spam
+      if (Date.now() % 1000 < 20) {
+        console.log('Near stairs:', {
+          position: hero.position,
+          allGunmenDefeated: hero.allGunmenDefeated
+        });
+      }
+    }
+    
     for (const rooftop of rooftops) {
       // Check if any part of the hero is on the rooftop (more lenient collision)
       if (hero.position.x + heroHalfWidth >= rooftop.userData.xMin && 
@@ -321,7 +496,29 @@ export function animationLoop(
         hero.position.y = currentRooftop.position.y + (currentRooftop.geometry.parameters.height / 2) + 1;
       }
       
-      // Add handling for Level 3 stairs platform
+      // Add handling for Level 3 stage transition - check for any position on the elevated platform
+      if (gameState.currentLevel === 3 && hero.allGunmenDefeated && !hero.stageTransitioned &&
+          hero.position.x >= 71 && hero.position.x <= 89 && 
+          Math.abs(hero.position.y - 4.5) < 1.5) { // More flexible height check
+        
+        // Debug log for transition
+        console.log('Stage transition triggered!', hero.position);
+        
+        // Transition to stage 2 with new background and music
+        transitionToStage2(scene, hero);
+      }
+      
+      // Debug info to check transition conditions - use the same position check
+      if (hero.position.x >= 71 && hero.position.x <= 89 && 
+          Math.abs(hero.position.y - 4.5) < 1.5) {
+        console.log('Player in transition zone:', {
+          allGunmenDefeated: hero.allGunmenDefeated,
+          alreadyTransitioned: hero.stageTransitioned,
+          position: { x: hero.position.x, y: hero.position.y }
+        });
+      }
+
+      // Legacy code for stage advancement
       if (gameState.currentLevel === 3 && hero.hasDefeatedStage1 && 
           hero.position.x >= 50 && hero.position.x <= 60 && 
           hero.position.y >= 3.5) {

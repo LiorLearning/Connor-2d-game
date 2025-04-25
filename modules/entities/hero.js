@@ -34,6 +34,9 @@ export function initHero(scene) {
     hasShield: true,
     shieldHealth: 100, // 100% shield
     shieldMesh: null,  // Will hold the shield mesh
+    // Track if all gunmen have been defeated to allow stair access
+    allGunmenDefeated: false,
+    stageTransitioned: false,
   };
 
   // Create hero sprite and glow effect
