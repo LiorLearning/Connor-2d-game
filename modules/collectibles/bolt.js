@@ -491,8 +491,6 @@ export function createBoltArrowIndicator(targetX, targetY, hero) {
   // Start the animation loop
   updateArrowIndicator();
   
-  // Log to console for debugging
-  console.log('Arrow indicator created pointing to:', targetX, targetY);
   
   return {
     element: arrowContainer,
@@ -510,7 +508,6 @@ export function createBoltArrowIndicator(targetX, targetY, hero) {
         document.getElementById('renderDiv').removeChild(notification);
       }
       
-      console.log('Arrow indicator removed');
     }
   };
 }

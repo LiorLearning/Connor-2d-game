@@ -18,7 +18,6 @@ import { advanceToNextLevel } from '../gameplay/levelManager.js';
 function transitionToStage2(scene, hero) {
   // Mark the hero as having transitioned to prevent multiple transitions
   hero.stageTransitioned = true;
-  console.log('Stage transition function called - hero marked as transitioned');
   
   // Set game state to stage 2
   if (hero.gameState) {
@@ -52,35 +51,28 @@ function transitionToStage2(scene, hero) {
     pointerEvents: 'none'
   });
   document.body.appendChild(fadeOverlay);
-  console.log('Fade overlay created');
   
   // Start fade in
   setTimeout(() => {
     fadeOverlay.style.opacity = '1';
-    console.log('Fade in started');
   }, 100);
   
   // Change background and music after fade completes
   setTimeout(() => {
-    console.log('Loading new background texture...');
     // Change background texture
     const textureLoader = new THREE.TextureLoader();
     textureLoader.load('assets/background2.png', 
       // On successful load
       (newBackgroundTexture) => {
-        console.log('New background loaded successfully!');
         scene.background = newBackgroundTexture;
         
         // Pause the initial music before changing to the new background music
-        console.log('Pausing initial music...');
         const currentMusic = document.getElementById('background-music') || document.querySelector('audio');
         if (currentMusic) {
           currentMusic.pause();
-          console.log('Initial music paused');
         }
         
         // Change background music using our dedicated function
-        console.log('Changing background music...');
         changeBackgroundMusic('./assets/bg-music2.mp3', 2000, 2000);
         
         // Spawn rifle minions for Stage 2
@@ -346,10 +338,6 @@ export function animationLoop(
       hero.velocity.x = -0.1; // Slight push back
       
       // Debug log
-      console.log('Invisible wall activated:', {
-        heroX: hero.position.x,
-        allGunmenDefeated: hero.allGunmenDefeated
-      });
       
       // Show notification about the blocked path
       if (Date.now() - (hero.lastWallNotification || 0) > 5000) { // Show message only every 5 seconds
@@ -370,10 +358,6 @@ export function animationLoop(
     if (gameState.currentLevel === 3 && hero.position.x > 67 && hero.position.x < 73) {
       // Check every second to avoid console spam
       if (Date.now() % 1000 < 20) {
-        console.log('Near stairs:', {
-          position: hero.position,
-          allGunmenDefeated: hero.allGunmenDefeated
-        });
       }
     }
     
@@ -510,7 +494,6 @@ export function animationLoop(
           Math.abs(hero.position.y - 4.5) < 1.5) { // More flexible height check
         
         // Debug log for transition
-        console.log('Stage transition triggered!', hero.position);
         
         // Transition to stage 2 with new background and music
         transitionToStage2(scene, hero);
@@ -519,11 +502,6 @@ export function animationLoop(
       // Debug info to check transition conditions - use the same position check
       if (hero.position.x >= 71 && hero.position.x <= 89 && 
           Math.abs(hero.position.y - 4.5) < 1.5) {
-        console.log('Player in transition zone:', {
-          allGunmenDefeated: hero.allGunmenDefeated,
-          alreadyTransitioned: hero.stageTransitioned,
-          position: { x: hero.position.x, y: hero.position.y }
-        });
       }
 
       // Legacy code for stage advancement

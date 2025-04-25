@@ -23,12 +23,10 @@ export function setupAudio() {
 
 // Function to change background music with fade effect
 export function changeBackgroundMusic(newMusicSrc, fadeOutDuration = 1000, fadeInDuration = 1000) {
-  console.log('changeBackgroundMusic called with source:', newMusicSrc);
   
   const currentMusic = document.getElementById('background-music') || document.querySelector('audio');
   
   if (!currentMusic) {
-    console.log('No existing music found, creating new audio element');
     // If no existing music is found, create a new one
     const newMusic = new Audio(newMusicSrc);
     newMusic.id = 'background-music';
@@ -39,26 +37,21 @@ export function changeBackgroundMusic(newMusicSrc, fadeOutDuration = 1000, fadeI
     return;
   }
   
-  console.log('Existing music found, beginning transition');
   
   // Store original volume
   const originalVolume = currentMusic.volume || 0.2;
-  console.log('Original volume:', originalVolume);
   
   // Fade out current music
   let fadeOutStep = originalVolume / (fadeOutDuration / 50);
   fadeOutStep = Math.max(fadeOutStep, 0.01); // Ensure step is not too small
   
-  console.log('Fade out step:', fadeOutStep);
   
   const fadeOut = setInterval(() => {
     if (currentMusic.volume > fadeOutStep) {
       currentMusic.volume -= fadeOutStep;
-      console.log('Fading out, new volume:', currentMusic.volume);
     } else {
       clearInterval(fadeOut);
       currentMusic.pause();
-      console.log('Fade out complete, music paused');
       
       // Change source and start new music
       currentMusic.src = newMusicSrc;
@@ -66,22 +59,18 @@ export function changeBackgroundMusic(newMusicSrc, fadeOutDuration = 1000, fadeI
       currentMusic.volume = 0;
       
       currentMusic.play().then(() => {
-        console.log('New music started playing');
         // Fade in new music
         let volume = 0;
         let fadeInStep = originalVolume / (fadeInDuration / 50);
         fadeInStep = Math.max(fadeInStep, 0.01); // Ensure step is not too small
         
-        console.log('Fade in step:', fadeInStep);
         
         const fadeIn = setInterval(() => {
           if (volume < originalVolume) {
             volume = Math.min(volume + fadeInStep, originalVolume);
             currentMusic.volume = volume;
-            console.log('Fading in, new volume:', volume);
           } else {
             clearInterval(fadeIn);
-            console.log('Fade in complete, final volume:', currentMusic.volume);
           }
         }, 50);
       }).catch(error => {

@@ -147,19 +147,15 @@ export function processHeroAttack(hero, minions, scene, minionsFought, totalMini
         if (window.lastBoltPosition) {
           boltX = window.lastBoltPosition.x;
           boltY = window.lastBoltPosition.y;
-          console.log('Using stored bolt position:', boltX, boltY);
         } else {
           // Estimate the bolt position on the first rooftop
           boltX = -5 + Math.random() * 15; 
           boltY = 1.5;
-          console.log('Using estimated bolt position:', boltX, boltY);
         }
         
         // Create the arrow indicator (our updated function handles cleanup)
         createBoltArrowIndicator(boltX, boltY, hero);
         
-        // Log to console to confirm arrow has been created
-        console.log('Arrow indicator created pointing to bolt at:', boltX, boltY);
       }
       
       // Check if enough time has passed to respawn a collectible

@@ -130,30 +130,30 @@ function showStage2TimeoutPopup() {
     fontFamily: "'Orbitron', sans-serif"
   });
   
-  // Message content
+  // Message content - no Close button
   messageContainer.innerHTML = `
     <h2 style='color: #ff3333; font-size: 28px; margin-bottom: 20px;'>Time's Up!</h2>
-    <p style='font-size: 20px; margin-bottom: 20px;'>To unlock more rifle minions, you need to come tomorrow.</p>
-    <button id='closeTimeoutPopup' style='background-color: #ff3333; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; font-family: Orbitron, sans-serif;'>Close</button>
+    <p style='font-size: 20px;'>To unlock more rifle minions, you need to come tomorrow.</p>
   `;
   
   overlayContainer.appendChild(messageContainer);
   document.getElementById('renderDiv').appendChild(overlayContainer);
   
-  // Add event listener to close button
-  document.getElementById('closeTimeoutPopup').addEventListener('click', () => {
-    document.getElementById('renderDiv').removeChild(overlayContainer);
-    
-    // If game state exists, unlock movement
-    if (window.gameState) {
-      window.gameState.movementLocked = false;
-    }
-  });
-  
-  // Lock movement while popup is shown
+  // Permanently lock movement to prevent game from continuing
   if (window.gameState) {
     window.gameState.movementLocked = true;
   }
+  
+  // Disable keyboard inputs by adding a global event listener that prevents all keyboard events
+  const disableKeyboardHandler = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  };
+  
+  // Add the event listener to capture and block all keyboard events
+  document.addEventListener('keydown', disableKeyboardHandler, true);
+  document.addEventListener('keyup', disableKeyboardHandler, true);
 }
 
 // Function to spawn new rifle minions
@@ -192,8 +192,6 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
     defeatMessage = `GUN MINION DEFEATED!`;
     defeatColor = '#ffaa00';
     
-    // Log for debugging
-    console.log('Gun minion defeated!', minion.position);
   } else if (minion.type === 'rifle-man') {
     defeatMessage = `RIFLE MINION DEFEATED!`;
     defeatColor = '#ff5555';
@@ -267,19 +265,15 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
       }
     }
     
-    // Debug log
-    console.log(`Remaining minions: ${remainingMinions} (Gun: ${remainingGunMen}, Rifle: ${remainingRifleMen})`);
     
     // Check if this was a gun-man and count if any remain
     if (minion.type === 'gun-man') {
-      console.log(`Gun minion defeated at ${minion.group.position.x}! Remaining: ${remainingGunMen}`);
     }
     
     // Check if no gun minions remain (whether this was the last one or not)
     if (remainingGunMen === 0) {
       // Mark gunmen as defeated to allow stair access regardless of position
       hero.allGunmenDefeated = true;
-      console.log('All gun minions defeated! Stairs unlocked.');
       
       // Restore full health
       hero.health = 100;
