@@ -161,7 +161,7 @@ function spawnRifleMinions(scene, minions) {
   // Spawn 2 rifle minions on the platform
   for (let i = 0; i < 2; i++) {
     setTimeout(() => {
-      const xPos = 80 + (i - 1) * 2;
+      const xPos = 85 + (i - 1) * 2;
       const zPos = (Math.random() - 0.5) * 3;
       // Create rifle minions on elevated platform
       const newMinion = createMinion(scene, xPos, 5, zPos, 3, 'rifle-man');

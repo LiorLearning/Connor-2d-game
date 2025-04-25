@@ -71,6 +71,14 @@ function transitionToStage2(scene, hero) {
         console.log('New background loaded successfully!');
         scene.background = newBackgroundTexture;
         
+        // Pause the initial music before changing to the new background music
+        console.log('Pausing initial music...');
+        const currentMusic = document.getElementById('background-music') || document.querySelector('audio');
+        if (currentMusic) {
+          currentMusic.pause();
+          console.log('Initial music paused');
+        }
+        
         // Change background music using our dedicated function
         console.log('Changing background music...');
         changeBackgroundMusic('./assets/bg-music2.mp3', 2000, 2000);
