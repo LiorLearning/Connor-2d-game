@@ -110,23 +110,51 @@ function initGame() {
       // Create the stairs immediately
       import('./modules/entities/minionUpdates.js').then(module => {
         // Create stairs to the middle platform only
-        module.createStairsForGame(scene, 45, 1.5, 0);
+        module.createStairsForGame(scene, 72, 1.5, 0);
       });
       
       // Spawn minions for Level 3
       setTimeout(() => {
-        // Rifle minions on the middle platform
-        for (let i = 0; i < 2; i++) {
+        // Gun minions on roof 1
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            const xPos = 35 + (i - 1) * 2; 
+            const zPos = (Math.random() - 0.5) * 3;
+            // Create gun minions on roof 1
+            const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man');
+            minions.push(newMinion);
+            
+            // Add spawn effect
+            createMinionSpawnEffect(scene, xPos, 1.5, zPos, 3);
+          }, i * 100);
+        }
+        
+        // Gun minions on new roof 2
+        for (let i = 0; i < 4; i++) {
           setTimeout(() => {
             const xPos = 60 + (i - 1) * 2; 
             const zPos = (Math.random() - 0.5) * 3;
-            // Create rifle minions
+            // Create gun minions on roof 2
+            const newMinion = createMinion(scene, xPos, 1.5, zPos, 3, 'gun-man');
+            minions.push(newMinion);
+            
+            // Add spawn effect
+            createMinionSpawnEffect(scene, xPos, 1.5, zPos, 3);
+          }, (i + 3) * 100);
+        }
+        
+        // Rifle minions on the middle platform
+        for (let i = 0; i < 2; i++) {
+          setTimeout(() => {
+            const xPos = 80 + (i - 1) * 2; 
+            const zPos = (Math.random() - 0.5) * 3;
+            // Create rifle minions on elevated platform
             const newMinion = createMinion(scene, xPos, 5, zPos, 3, 'rifle-man');
             minions.push(newMinion);
             
             // Add spawn effect
             createMinionSpawnEffect(scene, xPos, 5, zPos, 3);
-          }, i * 100); // Faster spawn timing
+          }, (i + 7) * 100);
         }
         
         // Update instructions

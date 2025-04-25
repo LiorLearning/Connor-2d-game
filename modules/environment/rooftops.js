@@ -42,6 +42,26 @@ export function createRooftops(scene) {
   scene.add(nextRooftop);
   rooftops.push(nextRooftop);
   
+  // Create new rooftop (Roof 2) at the same level as Roof 0 and Roof 1
+  const newRooftop = new THREE.Mesh(
+    new THREE.BoxGeometry(25, 1, 10),
+    new THREE.MeshPhongMaterial({
+      color: 0x89c4d6,
+      emissive: 0x3f6675,
+      emissiveIntensity: 0.4,
+      shininess: 80
+    })
+  );
+  // Position the new rooftop with a smaller gap (2.5 units) from the second rooftop
+  newRooftop.position.set(60, -0.5, 0);
+  newRooftop.userData = {
+    id: 2,
+    xMin: 47.5, // 60 - 12.5
+    xMax: 72.5  // 60 + 12.5
+  };
+  scene.add(newRooftop);
+  rooftops.push(newRooftop);
+  
   // Create second level platform
   const midRooftop = new THREE.Mesh(
     new THREE.BoxGeometry(18, 1, 10),
@@ -53,11 +73,11 @@ export function createRooftops(scene) {
     })
   );
   // Position the middle rooftop at a higher level
-  midRooftop.position.set(55, 3.5, 0);
+  midRooftop.position.set(80, 3.5, 0);
   midRooftop.userData = {
-    id: 2,
-    xMin: 46, // 55 - 9
-    xMax: 64  // 55 + 9
+    id: 3,
+    xMin: 71, // 80 - 9
+    xMax: 89  // 80 + 9
   };
   scene.add(midRooftop);
   rooftops.push(midRooftop);

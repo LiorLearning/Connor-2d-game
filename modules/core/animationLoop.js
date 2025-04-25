@@ -269,15 +269,16 @@ export function animationLoop(
     // Update camera and skyline parallax.
     camera.position.x = hero.position.x;
     
-    // Elevate camera when on stairs in Level 3
+    // Elevate camera only when near the stairs in Level 3
     if (gameState.currentLevel === 3) {
-      if (hero.position.x >= 40 && hero.position.y >= 2) {
+      // Check if player is near the stairs (adjusted for new positions)
+      if (hero.position.x >= 65 && hero.position.x <= 85 && hero.position.y >= 2) {
         camera.position.y = 8; // Raise camera to see rifle men on the elevated platform
       } else {
-        camera.position.y = 4; // Default camera height
+        camera.position.y = 4; // Default camera height for horizontal movement on roofs
       }
     } else {
-      // camera.position.y = 4; // Default camera height
+      camera.position.y = 4; // Default camera height for other levels
     }
     
     skyline.position.x = hero.position.x * 0.4;
