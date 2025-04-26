@@ -198,23 +198,6 @@ export function defeatedMinion(minion, scene, minionsFought, totalMinions,
     
     // Track rifle minion defeats for respawning
     rifleMinionsDefeated++;
-    
-    // If stage2Timer isn't set yet, start the 10-second timer for this stage
-    if (!stage2Timer && !stage2Unlocked && hero.gameState && hero.gameState.currentStage === 2) {
-      stage2Timer = setTimeout(() => {
-        showStage2TimeoutPopup();
-      }, 10000); // 10 seconds
-    }
-    
-    // Spawn new rifle minions after a short delay when 2 are defeated
-    if (rifleMinionsDefeated % 2 === 0 && !stage2Unlocked && hero.gameState && hero.gameState.currentStage === 2) {
-      setTimeout(() => {
-        // Only respawn if we're still in stage 2 and the timeout hasn't occurred
-        if (hero.gameState && hero.gameState.currentStage === 2 && !stage2Unlocked) {
-          spawnRifleMinions(scene, minions);
-        }
-      }, 1500);
-    }
   } else {
     defeatMessage = `MINION DEFEATED!`;
     defeatColor = '#bb88ff';

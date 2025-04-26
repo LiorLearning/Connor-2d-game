@@ -102,7 +102,7 @@ function transitionToStage2(scene, hero) {
             
             // Show notification about rifle minions
             createNotification(
-              'RIFLE MINIONS AHEAD!<br><span style="font-size: 16px">Defeat them quickly - you only have 10 seconds!</span>',
+              'RIFLE MINIONS AHEAD!',
               {
                 color: '#ff5555',
                 fontSize: '26px',

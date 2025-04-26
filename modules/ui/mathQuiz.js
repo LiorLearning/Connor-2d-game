@@ -265,6 +265,97 @@ export function showMathQuiz(hero, gameState) {
     // Calculate earned points (2 per correct answer)
     const earnedPoints = correctAnswers * 2;
     
+    // If player hasn't earned any bolts yet and this is a regular quiz (not shield restoration), they need to try again
+    if (earnedPoints === 0 && !(gameState && gameState.onQuizComplete)) {
+      // Create retry container
+      const retryContainer = document.createElement('div');
+      Object.assign(retryContainer.style, {
+        textAlign: 'center',
+        padding: '20px'
+      });
+      
+      // Add retry title
+      const retryTitle = document.createElement('h3');
+      retryTitle.textContent = 'No Lightning Bolts Earned!';
+      Object.assign(retryTitle.style, {
+        color: '#ff3333',
+        fontSize: '22px',
+        marginBottom: '10px'
+      });
+      retryContainer.appendChild(retryTitle);
+      
+      // Add message
+      const retryMessage = document.createElement('p');
+      retryMessage.textContent = `You need at least one correct answer to continue.`;
+      Object.assign(retryMessage.style, {
+        fontSize: '18px',
+        marginBottom: '15px'
+      });
+      retryContainer.appendChild(retryMessage);
+      
+      // Create retry button
+      const retryButton = document.createElement('button');
+      retryButton.textContent = 'Try Again';
+      Object.assign(retryButton.style, {
+        backgroundColor: 'rgba(150, 50, 50, 0.8)',
+        border: '2px solid #ff5555',
+        borderRadius: '5px',
+        padding: '12px 24px',
+        color: 'white',
+        fontSize: '18px',
+        cursor: 'pointer',
+        margin: '10px auto',
+        display: 'block',
+        transition: 'all 0.2s'
+      });
+      
+      retryButton.addEventListener('mouseover', () => {
+        retryButton.style.backgroundColor = 'rgba(180, 60, 60, 0.8)';
+      });
+      
+      retryButton.addEventListener('mouseout', () => {
+        retryButton.style.backgroundColor = 'rgba(150, 50, 50, 0.8)';
+      });
+      
+      retryButton.addEventListener('click', () => {
+        // Reset the quiz with new questions
+        currentQuestionIndex = 0;
+        correctAnswers = 0;
+        
+        // Generate new math questions
+        mathQuestions.length = 0;
+        for (let i = 0; i < 3; i++) {
+          const num1 = Math.floor(Math.random() * 7) + 3;
+          const num2 = Math.floor(Math.random() * 7) + 3;
+          
+          const correctAnswer = (num1 * num2).toString();
+          
+          let options = [correctAnswer];
+          while (options.length < 4) {
+            const wrongAnswer = (num1 * num2 + Math.floor(Math.random() * 10) - 5).toString();
+            if (wrongAnswer > 0 && !options.includes(wrongAnswer)) {
+              options.push(wrongAnswer);
+            }
+          }
+          
+          options = options.sort(() => Math.random() - 0.5);
+          
+          mathQuestions.push({
+            question: `What is ${num1} × ${num2}?`,
+            options: options,
+            correctAnswer: correctAnswer
+          });
+        }
+        
+        // Start the quiz again with the first question
+        showQuestion(currentQuestionIndex);
+      });
+      
+      retryContainer.appendChild(retryButton);
+      questionContainer.appendChild(retryContainer);
+      return;
+    }
+    
     // Set invincibility time to 5 seconds if there are any correct answers
     const invincibilityTime = correctAnswers > 0 ? 5000 : 0; // fixed 5 seconds (5000ms)
     
