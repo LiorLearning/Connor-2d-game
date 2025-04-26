@@ -19,13 +19,17 @@ export function updateSpriteOrientation(hero, villain) {
 
 export function handleHeroFalling(hero, camera, villain, minions, scene, gameState, updateHealthBar, speechBubble, trail) {
   hero.falling = true;
-  hero.grounded = false;
   
-  // Show falling notification
-  createNotification('GAME RESTART', { 
+  // Calculate 33% HP reduction
+  const hpReduction = Math.ceil(hero.health * 0.33); // Calculate 33% of current health
+  hero.health -= hpReduction; // Reduce health by 33%
+  updateHealthBar(hero.health); // Update the health bar
+  
+  // Show falling notification with HP reduction
+  createNotification(`-${hpReduction} HP!`, { 
     color: '#ff3333', 
-    fontSize: '48px',
-    duration: 2000
+    fontSize: '32px',
+    duration: 1500
   });
   
   // Add screen shake effect
@@ -42,10 +46,32 @@ export function handleHeroFalling(hero, camera, villain, minions, scene, gameSta
     }
   }, 50);
   
-  // Reload the game after delay
-  setTimeout(() => {
-    window.location.reload();
-  }, 2000);
+  // Reset hero position to the starting point
+  hero.position.x = 0;
+  hero.position.y = 1.5;
+  hero.velocity.x = 0;
+  hero.velocity.y = 0;
+  hero.falling = false;
+  hero.grounded = true;
+  
+  // Check if hero is dead after the fall
+  if (hero.health <= 0) {
+    // Create death effect
+    createNotification('DEFEATED!', { 
+      color: '#ff0000', 
+      fontSize: '64px',
+      duration: 2000
+    });
+    
+    // Reload the game after delay
+    setTimeout(() => {
+      window.location.reload();
+    }, 2500);
+  } else {
+    // Grant temporary invulnerability
+    hero.lastHit = Date.now();
+    hero.isInvulnerable = true;
+  }
 }
 
 export function handleHeroInvulnerability(hero) {
